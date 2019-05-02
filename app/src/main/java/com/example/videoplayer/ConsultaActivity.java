@@ -9,6 +9,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.android.volley.Request;
@@ -20,7 +24,18 @@ import com.android.volley.toolbox.Volley;
 
 public class ConsultaActivity extends AppCompatActivity {
     //JsonFile To Test
-    String JsontoTest="{\"Title\":\"aquaman\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"21 Dec 2018\",\"Runtime\":\"143 min\",\"Genre\":\"Action, Adventure, Fantasy, Sci-Fi\",\"Director\":\"James Wan\",\"Writer\":\"David Leslie Johnson-McGoldrick (screenplay by), Will Beall (screenplay by), Geoff Johns (story by), James Wan (story by), Will Beall (story by), Mort Weisinger (Aquaman created by), Paul Norris (Aquaman created by)\",\"Actors\":\"Jason Momoa, Amber Heard, Willem Dafoe, Patrick Wilson\",\"Plot\":\"Arthur Curry, the human-born heir to the underwater kingdom of Atlantis, goes on a quest to prevent a war between the worlds of ocean and land.\",\"Language\":\"English\",\"Country\":\"Australia, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BOTk5ODg0OTU5M15BMl5BanBnXkFtZTgwMDQ3MDY3NjM@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.2/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"65%\"},{\"Source\":\"Metacritic\",\"Value\":\"55/100\"}],\"Metascore\":\"55\",\"imdbRating\":\"7.2\",\"imdbVotes\":\"236,813\",\"imdbID\":\"tt1477834\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://www.aquamanmovie.com/\",\"Response\":\"True\"}";
+    String JsontoTest="{\"Title\":\"aquaman\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"21 Dec 2018\",\"Runtime\":\"143 min\",\"Genre\":\"Action, Adventure, Fantasy, Sci-Fi\",\"Director\":\"James Wan\",\"Writer\":\"David Leslie Johnson-McGoldrick (screenplay by), Will Beall (screenplay by), Geoff Johns (story by), James Wan (story by), Will Beall (story by), Mort Weisinger (Aquaman created by), Paul Norris (Aquaman created by)\",\"Actors\":\"Jason Momoa, Amber Heard, Willem Dafoe, Patrick Wilson\",\"Plot\":\"Arthur Curry, the human-born heir to the underwater kingdom of Atlantis, goes on a quest to prevent a war between the worlds of ocean and land.\",\"Language\":\"English\",\"Country\":\"Australia, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BOTk5ODg0OTU5M15BMl5BanBnXkFtZTgwMDQ3MDY3NjM@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.2/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"65%\"},{\"Source\":\"Metacritic\",\"Value\":\"55/100\"}],\"Metascore\":\"55\",\"imdbRating\":\"7.2\",\"imdbVotes\":\"236,813\",\"imdbID\":\"tt1477834\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://www.aquamanmovie.com/\"}";
+
+    int[] IMAGES = {R.drawable.movie1,R.drawable.movie2, R.drawable.movie3, R.drawable.movie5};
+    //To the scrollbar
+    String[] NAMES = {"Movie 1","Movie 2", "Movie 3","Movie 3"};
+
+    String[] YEARS = {"2015","2015","2015","2015"};
+
+    String[] DURATIONS = {"215","215","215","215"};
+
+    String[] CATEGORIES = {"Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy"};
+    //To populate details
     String title;
     String year;
     String duration;
@@ -36,6 +51,11 @@ public class ConsultaActivity extends AppCompatActivity {
         //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
         queue = Volley.newRequestQueue(this);
 
+
+        ListView listView=(ListView)findViewById(R.id.moviesListView);
+
+        ConsultaActivity.CustomAdapter customAdapter = new ConsultaActivity.CustomAdapter();
+        listView.setAdapter(customAdapter);
     }
 
     /** Called when the user taps the Send button */
@@ -52,6 +72,7 @@ public class ConsultaActivity extends AppCompatActivity {
 
         try {
             JSONObject result = new JSONObject(jsonToParse);
+            Log.d("aa",result.toString());
             title = result.getString("Title");
             year = result.getString("Year");
             duration = result.getString("Runtime");
@@ -77,6 +98,8 @@ public class ConsultaActivity extends AppCompatActivity {
         textview_rating.setText(rating);
         TextView textview_plot = (findViewById(R.id.textView_MoviePlot));
         textview_plot.setText(Plot);
+        ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
+        imageView_MainMoview.setImageResource(IMAGES[0]);
 
 
     }
@@ -124,6 +147,43 @@ public class ConsultaActivity extends AppCompatActivity {
                         Toast.makeText(ConsultaActivity.this, error.toString(), Toast.LENGTH_LONG).show();
                     }
                 });}
+
+
+    class CustomAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return IMAGES.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            convertView = getLayoutInflater().inflate(R.layout.elemento_listagem, null);
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.MovieImageView);
+            TextView textViewName = (TextView) convertView.findViewById(R.id.MovieNameTextView);
+            TextView textViewYear = (TextView) convertView.findViewById(R.id.MovieYearTextView);
+            TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
+            TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
+
+            imageView.setImageResource(IMAGES[position]);
+            textViewName.setText(NAMES[position]);
+            textViewYear.setText(YEARS[position]);
+            textViewCategorie.setText(CATEGORIES[position]);
+            textViewDuration.setText(DURATIONS[position] + "min");
+
+            return convertView;
+        }
+    }
 }
 
 
