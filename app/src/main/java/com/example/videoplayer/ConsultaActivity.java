@@ -226,6 +226,7 @@ public class ConsultaActivity extends AppCompatActivity {
 
             imageView.setImageResource(IMAGES.get(position));
             textViewName.setText(NAMES.get(position));
+            textViewName.setTextSize(20);
             textViewYear.setText(YEARS.get(position));
             textViewCategorie.setText(CATEGORIES.get(position));
             textViewDuration.setText(DURATIONS.get(position));
