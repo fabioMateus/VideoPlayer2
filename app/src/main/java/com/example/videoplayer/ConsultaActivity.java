@@ -23,6 +23,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,15 +33,12 @@ public class ConsultaActivity extends AppCompatActivity {
 
      String[] MoviesList;
      String Selected;
-    int[] IMAGES = {R.drawable.movie1,R.drawable.movie2, R.drawable.movie3, R.drawable.movie5};
     /**To the scrollbar*/
-    String[] NAMES = {"Movie 1","Movie 2", "Movie 3","Movie 3"};
-
-    String[] YEARS = {"2015","2015","2015","2015"};
-
-    String[] DURATIONS = {"215","215","215","215"};
-
-    String[] CATEGORIES = {"Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy"};
+    ArrayList <Integer> IMAGES = new ArrayList <Integer>();
+    ArrayList<String> NAMES =new ArrayList <String>();
+    ArrayList<String> YEARS = new ArrayList <String>();
+    ArrayList<String> DURATIONS = new ArrayList <String>();
+    ArrayList<String> CATEGORIES = new ArrayList <String>();
     /**To populate details*/
     String title;
     String year;
@@ -64,6 +62,7 @@ public class ConsultaActivity extends AppCompatActivity {
         ListView listView=(ListView)findViewById(R.id.moviesListView);
         ConsultaActivity.CustomAdapter customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
+
     }
     /** Called when the user taps the Play trailer button */
     public void PlayTrailer(View view) {
@@ -105,7 +104,7 @@ public class ConsultaActivity extends AppCompatActivity {
         textview_plot.setText(Plot);
         //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
-        imageView_MainMoview.setImageResource(IMAGES[0]);
+        imageView_MainMoview.setImageResource(R.drawable.movie5);
 
 
     }
@@ -165,18 +164,37 @@ public class ConsultaActivity extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        //Liat of movies
         for (String movies : moviesList) {
             try {
                 JSONObject result = new JSONObject(movies);
                 //Log.d("aa",result.toString())
 
                 String genreRecomemended = result.getString("Genre");
-                List<String> genreListRecomemended = Arrays.asList(genreRecomemended.split(","));
-
                 String titleRecomemended = result.getString("Title");
                 String yearRecomemended = result.getString("Year");
                 String durationRecomemended = result.getString("Runtime");
-                Log.d("teste",genreListRecomemended.toString());
+                boolean findGenre;
+                findGenre=false;
+                //List of genre selected
+                for(String genre :selectedGenreList )
+                {
+                    if ( genreRecomemended.toLowerCase().indexOf(genre.toLowerCase()) != -1 ) {
+                        findGenre = true;
+                    }
+                }
+                if(findGenre==true)
+                {
+                    //IMAGEM
+                    IMAGES.add(R.drawable.movie1);
+                    NAMES.add(titleRecomemended);
+                    YEARS.add(yearRecomemended);
+                    DURATIONS.add(durationRecomemended);
+                    CATEGORIES.add(genreRecomemended);
+                }
+
+
+
 
 
 
@@ -186,14 +204,12 @@ public class ConsultaActivity extends AppCompatActivity {
             }
         }
     }
-
-
-/**For creating the recomendations list*/
+    /**For creating the recomendations list*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
         public int getCount() {
-            return IMAGES.length;
+            return IMAGES.size();
         }
 
         @Override
@@ -215,11 +231,11 @@ public class ConsultaActivity extends AppCompatActivity {
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
 
-            imageView.setImageResource(IMAGES[position]);
-            textViewName.setText(NAMES[position]);
-            textViewYear.setText(YEARS[position]);
-            textViewCategorie.setText(CATEGORIES[position]);
-            textViewDuration.setText(DURATIONS[position] + "min");
+            imageView.setImageResource(IMAGES.get(position));
+            textViewName.setText(NAMES.get(position));
+            textViewYear.setText(YEARS.get(position));
+            textViewCategorie.setText(CATEGORIES.get(position));
+            textViewDuration.setText(DURATIONS.get(position) + "min");
 
             return convertView;
         }
