@@ -3,8 +3,10 @@ package com.example.videoplayer;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -30,17 +32,34 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         ListView listView=(ListView)findViewById(R.id.moviesListView);
+
+
 
         CustomAdapter customAdapter = new CustomAdapter();
         listView.setAdapter(customAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Seu codigo aqui
+                Log.d("TEsSS", "onItemClick: " + id);
+                String data = "Some Data";
+                previewMovie(view, data);
+            }
+        });
     }
 
 
+
+
     /** Called when the user taps the Send button */
-    public void sendMessage(View view) {
+    public void previewMovie(View view, String data) {
         Intent intent = new Intent(this, ConsultaActivity.class);
+        intent.putExtra("S", data);
+        intent.putExtra("DATA", data);
         startActivity(intent);
     }
 
@@ -58,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public long getItemId(int position) {
-            return 0;
+            return position;
         }
 
         @Override
