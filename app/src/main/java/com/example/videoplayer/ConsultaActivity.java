@@ -1,16 +1,20 @@
 package com.example.videoplayer;
 import android.content.Intent;
 import android.graphics.Movie;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.content.Intent;
 import android.view.View;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -22,23 +26,22 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class ConsultaActivity extends AppCompatActivity {
-    //JsonFile To Test
-    //String JsontoTest;
 
-    String[] MoviesList;
+    String[] MoviesListArray;
+    ArrayList<String> MoviesList;
     String Selected;
     /**To the scrollbar*/
-    ArrayList <Integer> IMAGES = new ArrayList <Integer>();
-    ArrayList<String> NAMES =new ArrayList <String>();
-    ArrayList<String> YEARS = new ArrayList <String>();
-    ArrayList<String> DURATIONS = new ArrayList <String>();
-    ArrayList<String> CATEGORIES = new ArrayList <String>();
+    ArrayList <Integer> IMAGES;
+    ArrayList<String> NAMES;
+    ArrayList<String> YEARS;
+    ArrayList<String> DURATIONS;
+    ArrayList<String> CATEGORIES;
     /**To populate details*/
     String title;
     String year;
@@ -50,18 +53,46 @@ public class ConsultaActivity extends AppCompatActivity {
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {
-        MoviesList= getIntent().getStringArrayExtra("MoviesList");
+        MoviesListArray= getIntent().getStringArrayExtra("MoviesList");
+        MoviesList= new ArrayList<>(Arrays.asList(MoviesListArray));
         Selected=getIntent().getStringExtra("Selected");
-        //Log.d("ssd",MoviesList+"");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
         populateData(Selected);
         populateRecomemnded(MoviesList,Selected);
         //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
         queue = Volley.newRequestQueue(this); //para a api
-        ListView listView=(ListView)findViewById(R.id.moviesListView);
-        ConsultaActivity.CustomAdapter customAdapter = new ConsultaActivity.CustomAdapter();
+        final ListView listView=(ListView)findViewById(R.id.moviesListView);
+        final ConsultaActivity.CustomAdapter  customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView textView = (TextView) view.findViewById(R.id.MovieNameTextView);
+                String MovieSeleted=(textView.getText()+"");
+                for (String movies :MoviesList ) {
+                    try {
+                        JSONObject result = new JSONObject(movies);
+                        String titleRecomemended = result.getString("Title");
+                        if(titleRecomemended.equals(MovieSeleted))
+                        {
+                            String tempSelected=Selected;
+                            Selected=movies;
+                            MoviesList.remove(Selected);
+                            MoviesList.add(tempSelected);
+                            populateData(Selected);
+                            populateRecomemnded(MoviesList,Selected);
+                            customAdapter.notifyDataSetChanged();
+                            break;
+                        }
+
+                    } catch (JSONException e) {
+                        Log.e("ERROR",e.getMessage());
+                    }
+                }
+            }
+        });
+
 
     }
     /** Called when the user taps the Play trailer button */
@@ -104,7 +135,8 @@ public class ConsultaActivity extends AppCompatActivity {
         textview_plot.setText(Plot);
         //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
-        imageView_MainMoview.setImageResource(R.drawable.movie5);
+        imageView_MainMoview.setImageResource(getImagesMovies(title,year));
+;
 
 
     }
@@ -153,7 +185,12 @@ public class ConsultaActivity extends AppCompatActivity {
                     }
                 });}
     /** to populate the recommended for you */
-    public void populateRecomemnded(String[] moviesList,String selected) {
+    public void populateRecomemnded(ArrayList<String> moviesList,String selected) {
+        IMAGES= new ArrayList <Integer>();
+        NAMES = new ArrayList<String>();
+        YEARS=  new ArrayList<String>();
+        DURATIONS= new ArrayList<String>();
+        CATEGORIES= new ArrayList<String>();
         List<String>  selectedGenreList;
         try {
             JSONObject result = new JSONObject(selected);
@@ -186,7 +223,7 @@ public class ConsultaActivity extends AppCompatActivity {
                 if(findGenre==true)
                 {
                     //IMAGEM
-                    IMAGES.add(R.drawable.movie1);
+                    IMAGES.add(getImagesMovies(titleRecomemended,yearRecomemended));
                     NAMES.add(titleRecomemended);
                     YEARS.add(yearRecomemended);
                     DURATIONS.add(durationRecomemended);
@@ -196,6 +233,25 @@ public class ConsultaActivity extends AppCompatActivity {
                 throw new RuntimeException(e);
             }
         }
+    }
+    /**Get image for the movies*/
+    public int getImagesMovies (String movieName, String movieYear){
+        //Remove spaces
+        movieName=movieName.replaceAll("\\s+","");
+        movieYear=movieYear.replaceAll("\\s+","");
+
+        //remove accents
+        movieName = Normalizer.normalize(movieName, Normalizer.Form.NFD);
+        movieName = movieName.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+
+        //to lowercase
+        movieName= movieName.toLowerCase();
+        movieYear= movieYear.toLowerCase();
+        //Get Image
+        String image = movieName+movieYear;
+        int returnImage = getResources().getIdentifier(image , "drawable", getPackageName());
+
+        return returnImage;
     }
     /**For creating the recomendations list*/
     class CustomAdapter extends BaseAdapter {
@@ -226,7 +282,7 @@ public class ConsultaActivity extends AppCompatActivity {
 
             imageView.setImageResource(IMAGES.get(position));
             textViewName.setText(NAMES.get(position));
-            textViewName.setTextSize(20);
+            textViewName.setTextSize(16);
             textViewYear.setText(YEARS.get(position));
             textViewCategorie.setText(CATEGORIES.get(position));
             textViewDuration.setText(DURATIONS.get(position));
