@@ -23,11 +23,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class ConsultaActivity extends AppCompatActivity {
     //JsonFile To Test
     //String JsontoTest;
 
-     String MoviesList;
+     String[] MoviesList;
      String Selected;
     int[] IMAGES = {R.drawable.movie1,R.drawable.movie2, R.drawable.movie3, R.drawable.movie5};
     /**To the scrollbar*/
@@ -49,14 +52,13 @@ public class ConsultaActivity extends AppCompatActivity {
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {
-        MoviesList= getIntent().getStringExtra("MoviesList");
+        MoviesList= getIntent().getStringArrayExtra("MoviesList");
         Selected=getIntent().getStringExtra("Selected");
         Log.d("ssd",MoviesList+"");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
-       // Log.d("qq",MoviesList);
-        
         populateData(Selected);
+        populateRecomemnded(MoviesList,Selected);
         //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
         queue = Volley.newRequestQueue(this); //para a api
         ListView listView=(ListView)findViewById(R.id.moviesListView);
@@ -101,6 +103,7 @@ public class ConsultaActivity extends AppCompatActivity {
         textview_rating.setText(rating);
         TextView textview_plot = (findViewById(R.id.textView_MoviePlot));
         textview_plot.setText(Plot);
+        //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
         imageView_MainMoview.setImageResource(IMAGES[0]);
 
@@ -150,6 +153,40 @@ public class ConsultaActivity extends AppCompatActivity {
                         Toast.makeText(ConsultaActivity.this, error.toString(), Toast.LENGTH_LONG).show();
                     }
                 });}
+    /** to populate the recommended for you */
+    public void populateRecomemnded(String[] moviesList,String selected) {
+        List<String>  selectedGenreList;
+        try {
+            JSONObject result = new JSONObject(selected);
+            String genreRecomemended = result.getString("Genre");
+            selectedGenreList = Arrays.asList(genreRecomemended.split(","));
+            Log.d("teste",selectedGenreList.toString());
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        for (String movies : moviesList) {
+            try {
+                JSONObject result = new JSONObject(movies);
+                //Log.d("aa",result.toString())
+
+                String genreRecomemended = result.getString("Genre");
+                List<String> genreListRecomemended = Arrays.asList(genreRecomemended.split(","));
+
+                String titleRecomemended = result.getString("Title");
+                String yearRecomemended = result.getString("Year");
+                String durationRecomemended = result.getString("Runtime");
+                Log.d("teste",genreListRecomemended.toString());
+
+
+
+
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 
 /**For creating the recomendations list*/
     class CustomAdapter extends BaseAdapter {
@@ -187,6 +224,8 @@ public class ConsultaActivity extends AppCompatActivity {
             return convertView;
         }
     }
+
+
 }
 
 
