@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 import android.content.Intent;
+import android.graphics.Movie;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,20 +23,23 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class ConsultaActivity extends AppCompatActivity {
     //JsonFile To Test
-    String JsontoTest="{\"Title\":\"aquaman\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"21 Dec 2018\",\"Runtime\":\"143 min\",\"Genre\":\"Action, Adventure, Fantasy, Sci-Fi\",\"Director\":\"James Wan\",\"Writer\":\"David Leslie Johnson-McGoldrick (screenplay by), Will Beall (screenplay by), Geoff Johns (story by), James Wan (story by), Will Beall (story by), Mort Weisinger (Aquaman created by), Paul Norris (Aquaman created by)\",\"Actors\":\"Jason Momoa, Amber Heard, Willem Dafoe, Patrick Wilson\",\"Plot\":\"Arthur Curry, the human-born heir to the underwater kingdom of Atlantis, goes on a quest to prevent a war between the worlds of ocean and land.\",\"Language\":\"English\",\"Country\":\"Australia, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BOTk5ODg0OTU5M15BMl5BanBnXkFtZTgwMDQ3MDY3NjM@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.2/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"65%\"},{\"Source\":\"Metacritic\",\"Value\":\"55/100\"}],\"Metascore\":\"55\",\"imdbRating\":\"7.2\",\"imdbVotes\":\"236,813\",\"imdbID\":\"tt1477834\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://www.aquamanmovie.com/\"}";
+    //String JsontoTest;
 
-    int[] IMAGES = {R.drawable.movie1,R.drawable.movie2, R.drawable.movie3, R.drawable.movie5};
-    //To the scrollbar
-    String[] NAMES = {"Movie 1","Movie 2", "Movie 3","Movie 3"};
-
-    String[] YEARS = {"2015","2015","2015","2015"};
-
-    String[] DURATIONS = {"215","215","215","215"};
-
-    String[] CATEGORIES = {"Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy"};
-    //To populate details
+    String[] MoviesList;
+    String Selected;
+    /**To the scrollbar*/
+    ArrayList <Integer> IMAGES = new ArrayList <Integer>();
+    ArrayList<String> NAMES =new ArrayList <String>();
+    ArrayList<String> YEARS = new ArrayList <String>();
+    ArrayList<String> DURATIONS = new ArrayList <String>();
+    ArrayList<String> CATEGORIES = new ArrayList <String>();
+    /**To populate details*/
     String title;
     String year;
     String duration;
@@ -44,35 +48,35 @@ public class ConsultaActivity extends AppCompatActivity {
     String Plot;
     private RequestQueue queue;
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
+        MoviesList= getIntent().getStringArrayExtra("MoviesList");
+        Selected=getIntent().getStringExtra("Selected");
+        Log.d("ssd",MoviesList+"");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
-        populateData(JsontoTest);
+        populateData(Selected);
+        populateRecomemnded(MoviesList,Selected);
         //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
-        queue = Volley.newRequestQueue(this);
-
-
+        queue = Volley.newRequestQueue(this); //para a api
         ListView listView=(ListView)findViewById(R.id.moviesListView);
-
         ConsultaActivity.CustomAdapter customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
-    }
 
-    /** Called when the user taps the Send button */
+    }
+    /** Called when the user taps the Play trailer button */
     public void PlayTrailer(View view) {
 
         StringRequest stringRequest = searchNameStringRequest(title,year);
 
         queue.add(stringRequest);
     }
-
-
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
 
         try {
             JSONObject result = new JSONObject(jsonToParse);
-            Log.d("aa",result.toString());
+            //Log.d("aa",result.toString())
             title = result.getString("Title");
             year = result.getString("Year");
             duration = result.getString("Runtime");
@@ -98,8 +102,9 @@ public class ConsultaActivity extends AppCompatActivity {
         textview_rating.setText(rating);
         TextView textview_plot = (findViewById(R.id.textView_MoviePlot));
         textview_plot.setText(Plot);
+        //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
-        imageView_MainMoview.setImageResource(IMAGES[0]);
+        imageView_MainMoview.setImageResource(R.drawable.movie5);
 
 
     }
@@ -124,36 +129,87 @@ public class ConsultaActivity extends AppCompatActivity {
         String url = LINK + NAME_SEARCH + "trailer"+name + year+"&max_results=1";
         Log.i("myTag", url);
         return new StringRequest( Request.Method.GET, url, new Response.Listener<String>() {
-                   @Override
-                    public void onResponse(String response) {
-                                              try {
-                            JSONObject result = new JSONObject(response);
-                            JSONArray resultList =result.getJSONArray("items");
-                            JSONObject idlist = resultList.getJSONObject(0);
-                            String Listid= idlist.getString("id");
-                            JSONObject LastID = new JSONObject(Listid);
-                            String VideoId= LastID.getString("videoId");
-                            /**Play trailer*/
-                            watchYoutubeVideo(ConsultaActivity.this,VideoId);
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONObject result = new JSONObject(response);
+                    JSONArray resultList =result.getJSONArray("items");
+                    JSONObject idlist = resultList.getJSONObject(0);
+                    String Listid= idlist.getString("id");
+                    JSONObject LastID = new JSONObject(Listid);
+                    String VideoId= LastID.getString("videoId");
+                    /**Play trailer*/
+                    watchYoutubeVideo(ConsultaActivity.this,VideoId);
 
-                        } catch (JSONException e) {
-                            Toast.makeText(ConsultaActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    }
-                },
+                } catch (JSONException e) {
+                    Toast.makeText(ConsultaActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
+        },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Toast.makeText(ConsultaActivity.this, error.toString(), Toast.LENGTH_LONG).show();
                     }
                 });}
+    /** to populate the recommended for you */
+    public void populateRecomemnded(String[] moviesList,String selected) {
+        List<String>  selectedGenreList;
+        try {
+            JSONObject result = new JSONObject(selected);
+            String genreRecomemended = result.getString("Genre");
+            selectedGenreList = Arrays.asList(genreRecomemended.split(","));
+            Log.d("teste",selectedGenreList.toString());
+
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        //Liat of movies
+        for (String movies : moviesList) {
+            try {
+                JSONObject result = new JSONObject(movies);
+                //Log.d("aa",result.toString())
+
+                String genreRecomemended = result.getString("Genre");
+                String titleRecomemended = result.getString("Title");
+                String yearRecomemended = result.getString("Year");
+                String durationRecomemended = result.getString("Runtime");
+                boolean findGenre;
+                findGenre=false;
+                //List of genre selected
+                for(String genre :selectedGenreList )
+                {
+                    if ( genreRecomemended.toLowerCase().indexOf(genre.toLowerCase()) != -1 ) {
+                        findGenre = true;
+                    }
+                }
+                if(findGenre==true)
+                {
+                    //IMAGEM
+                    IMAGES.add(R.drawable.movie1);
+                    NAMES.add(titleRecomemended);
+                    YEARS.add(yearRecomemended);
+                    DURATIONS.add(durationRecomemended);
+                    CATEGORIES.add(genreRecomemended);
+                }
 
 
+
+
+
+
+
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    /**For creating the recomendations list*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
         public int getCount() {
-            return IMAGES.length;
+            return IMAGES.size();
         }
 
         @Override
@@ -175,15 +231,17 @@ public class ConsultaActivity extends AppCompatActivity {
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
 
-            imageView.setImageResource(IMAGES[position]);
-            textViewName.setText(NAMES[position]);
-            textViewYear.setText(YEARS[position]);
-            textViewCategorie.setText(CATEGORIES[position]);
-            textViewDuration.setText(DURATIONS[position] + "min");
+            imageView.setImageResource(IMAGES.get(position));
+            textViewName.setText(NAMES.get(position));
+            textViewYear.setText(YEARS.get(position));
+            textViewCategorie.setText(CATEGORIES.get(position));
+            textViewDuration.setText(DURATIONS.get(position) + "min");
 
             return convertView;
         }
     }
+
+
 }
 
 
