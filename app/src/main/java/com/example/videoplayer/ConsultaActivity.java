@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 import android.content.Intent;
+import android.graphics.Movie;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,10 +25,12 @@ import com.android.volley.toolbox.Volley;
 
 public class ConsultaActivity extends AppCompatActivity {
     //JsonFile To Test
-    String JsontoTest="{\"Title\":\"aquaman\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"21 Dec 2018\",\"Runtime\":\"143 min\",\"Genre\":\"Action, Adventure, Fantasy, Sci-Fi\",\"Director\":\"James Wan\",\"Writer\":\"David Leslie Johnson-McGoldrick (screenplay by), Will Beall (screenplay by), Geoff Johns (story by), James Wan (story by), Will Beall (story by), Mort Weisinger (Aquaman created by), Paul Norris (Aquaman created by)\",\"Actors\":\"Jason Momoa, Amber Heard, Willem Dafoe, Patrick Wilson\",\"Plot\":\"Arthur Curry, the human-born heir to the underwater kingdom of Atlantis, goes on a quest to prevent a war between the worlds of ocean and land.\",\"Language\":\"English\",\"Country\":\"Australia, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BOTk5ODg0OTU5M15BMl5BanBnXkFtZTgwMDQ3MDY3NjM@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.2/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"65%\"},{\"Source\":\"Metacritic\",\"Value\":\"55/100\"}],\"Metascore\":\"55\",\"imdbRating\":\"7.2\",\"imdbVotes\":\"236,813\",\"imdbID\":\"tt1477834\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://www.aquamanmovie.com/\"}";
+    //String JsontoTest;
 
+     String MoviesList;
+     String Selected;
     int[] IMAGES = {R.drawable.movie1,R.drawable.movie2, R.drawable.movie3, R.drawable.movie5};
-    //To the scrollbar
+    /**To the scrollbar*/
     String[] NAMES = {"Movie 1","Movie 2", "Movie 3","Movie 3"};
 
     String[] YEARS = {"2015","2015","2015","2015"};
@@ -35,7 +38,7 @@ public class ConsultaActivity extends AppCompatActivity {
     String[] DURATIONS = {"215","215","215","215"};
 
     String[] CATEGORIES = {"Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy"};
-    //To populate details
+    /**To populate details*/
     String title;
     String year;
     String duration;
@@ -44,35 +47,35 @@ public class ConsultaActivity extends AppCompatActivity {
     String Plot;
     private RequestQueue queue;
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
+        MoviesList= getIntent().getStringExtra("MoviesList");
+        Selected=getIntent().getStringExtra("Selected");
+        Log.d("ssd",MoviesList+"");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
-        populateData(JsontoTest);
+       // Log.d("qq",MoviesList);
+        
+        populateData(Selected);
         //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
-        queue = Volley.newRequestQueue(this);
-
-
+        queue = Volley.newRequestQueue(this); //para a api
         ListView listView=(ListView)findViewById(R.id.moviesListView);
-
         ConsultaActivity.CustomAdapter customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
     }
-
-    /** Called when the user taps the Send button */
+    /** Called when the user taps the Play trailer button */
     public void PlayTrailer(View view) {
 
         StringRequest stringRequest = searchNameStringRequest(title,year);
 
         queue.add(stringRequest);
     }
-
-
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
 
         try {
             JSONObject result = new JSONObject(jsonToParse);
-            Log.d("aa",result.toString());
+            //Log.d("aa",result.toString())
             title = result.getString("Title");
             year = result.getString("Year");
             duration = result.getString("Runtime");
@@ -148,7 +151,7 @@ public class ConsultaActivity extends AppCompatActivity {
                     }
                 });}
 
-
+/**For creating the recomendations list*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
