@@ -228,7 +228,7 @@ public class ConsultaActivity extends AppCompatActivity {
             textViewName.setText(NAMES.get(position));
             textViewYear.setText(YEARS.get(position));
             textViewCategorie.setText(CATEGORIES.get(position));
-            textViewDuration.setText(DURATIONS.get(position) + "min");
+            textViewDuration.setText(DURATIONS.get(position));
 
             return convertView;
         }
