@@ -192,13 +192,6 @@ public class ConsultaActivity extends AppCompatActivity {
                     DURATIONS.add(durationRecomemended);
                     CATEGORIES.add(genreRecomemended);
                 }
-
-
-
-
-
-
-
             } catch (JSONException e) {
                 throw new RuntimeException(e);
             }
