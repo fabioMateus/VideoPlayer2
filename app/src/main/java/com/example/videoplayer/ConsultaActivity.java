@@ -52,7 +52,7 @@ public class ConsultaActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         MoviesList= getIntent().getStringArrayExtra("MoviesList");
         Selected=getIntent().getStringExtra("Selected");
-        Log.d("ssd",MoviesList+"");
+        //Log.d("ssd",MoviesList+"");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
         populateData(Selected);
@@ -127,7 +127,7 @@ public class ConsultaActivity extends AppCompatActivity {
         final String LINK = "https://www.googleapis.com/youtube/v3/search/?key=AIzaSyCodSEk_8xSPlnZ1_Vfc3RWZjpaCPgrBqg&part=snippet";
         final String NAME_SEARCH = "&q=";
         String url = LINK + NAME_SEARCH + "trailer"+name + year+"&max_results=1";
-        Log.i("myTag", url);
+        //Log.i("myTag", url);
         return new StringRequest( Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -159,7 +159,7 @@ public class ConsultaActivity extends AppCompatActivity {
             JSONObject result = new JSONObject(selected);
             String genreRecomemended = result.getString("Genre");
             selectedGenreList = Arrays.asList(genreRecomemended.split(","));
-            Log.d("teste",selectedGenreList.toString());
+            //Log.d("teste",selectedGenreList.toString());
 
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -233,7 +233,6 @@ public class ConsultaActivity extends AppCompatActivity {
             return convertView;
         }
     }
-
 
 }
 
