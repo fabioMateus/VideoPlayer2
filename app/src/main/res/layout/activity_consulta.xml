@@ -158,14 +158,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_playMovie" />
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@android:color/holo_blue_bright"
-        tools:layout_editor_absoluteX="17dp"
-        tools:layout_editor_absoluteY="434dp" />
-
     <ListView
         android:id="@+id/moviesListView"
         android:layout_width="395dp"
