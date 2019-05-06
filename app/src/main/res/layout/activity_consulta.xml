@@ -6,6 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".ConsultaActivity">
 
+    <android.gesture.GestureOverlayView
+        android:id="@+id/gestures"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:gestureStrokeType="multiple"
+        android:eventsInterceptionEnabled="true"/>
+
     <ImageView
         android:id="@+id/imageView_MainMovie"
         android:layout_width="130dp"

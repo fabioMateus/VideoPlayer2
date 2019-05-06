@@ -1,5 +1,10 @@
 package com.example.videoplayer;
 import android.content.Intent;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.Prediction;
 import android.graphics.Movie;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -16,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -30,9 +36,10 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 
-public class ConsultaActivity extends AppCompatActivity {
-
+public class ConsultaActivity extends AppCompatActivity implements OnGesturePerformedListener{
+    /**Arrays of movies*/
     String[] MoviesListArray;
     ArrayList<String> MoviesList;
     String Selected;
@@ -50,9 +57,12 @@ public class ConsultaActivity extends AppCompatActivity {
     String rating;
     String Plot;
     private RequestQueue queue;
+    /**Gestures*/
+    private GestureLibrary gestureLib;
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {
+
         MoviesListArray= getIntent().getStringArrayExtra("MoviesList");
         MoviesList= new ArrayList<>(Arrays.asList(MoviesListArray));
         Selected=getIntent().getStringExtra("Selected");
@@ -92,8 +102,13 @@ public class ConsultaActivity extends AppCompatActivity {
                 }
             }
         });
-
-
+        /**For the gestures*/
+        GestureOverlayView gestureOverlayView = (GestureOverlayView)findViewById(R.id.gestures);
+        gestureOverlayView.addOnGesturePerformedListener(this);
+        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturejoao);
+        if (!gestureLib.load()) {
+            finish();
+        }
     }
     /** Called when the user taps the Play trailer button */
     public void PlayTrailer(View view) {
@@ -201,7 +216,7 @@ public class ConsultaActivity extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        //Liat of movies
+        //List of movies
         for (String movies : moviesList) {
             try {
                 JSONObject result = new JSONObject(movies);
@@ -253,7 +268,37 @@ public class ConsultaActivity extends AppCompatActivity {
 
         return returnImage;
     }
+    /**For the gestures*/
+    @Override
+    public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+        ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
+
+        for (Prediction prediction : predictions) {
+            if (prediction.score > 1.0)
+            {
+
+                if(prediction.name.equals("movie"))
+                {
+                    Button button_playMovie = findViewById(R.id.button_playMovie);
+                    button_playMovie.performClick();
+                    break;
+                }
+                else if(prediction.name.equals("trailer"))
+                {
+
+                    Button button_playTrailer = findViewById(R.id.button_playTrailer);
+                    button_playTrailer.performClick();
+                    break;
+                }
+            }
+            }
+
+
+    }
     /**For creating the recomendations list*/
+    public void openButton(String Gesture){
+
+    }
     class CustomAdapter extends BaseAdapter {
 
         @Override
