@@ -5,13 +5,10 @@ import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
 import android.gesture.Prediction;
-import android.graphics.Movie;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.content.Intent;
 import android.view.View;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -19,7 +16,6 @@ import org.json.JSONObject;
 import android.content.Context;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -56,22 +52,25 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     String genre;
     String rating;
     String Plot;
+    /**To the API*/
     private RequestQueue queue;
-    /**Gestures*/
+    /**To Gestures*/
     private GestureLibrary gestureLib;
+
     @Override
-
     protected void onCreate(Bundle savedInstanceState) {
-
+        /**Get the data from  MainActivity*/
         MoviesListArray= getIntent().getStringArrayExtra("MoviesList");
         MoviesList= new ArrayList<>(Arrays.asList(MoviesListArray));
         Selected=getIntent().getStringExtra("Selected");
+        /**Populate data*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
         populateData(Selected);
-        populateRecomemnded(MoviesList,Selected);
-        //Vai ser preciso fazer aqui a tal verificação se foi selecionado ou nao
-        queue = Volley.newRequestQueue(this); //para a api
+        populateRecommended(MoviesList,Selected);
+        /**for the api of youtube*/
+        queue = Volley.newRequestQueue(this);
+        /**For the Recommend list and click in one item from the list*/
         final ListView listView=(ListView)findViewById(R.id.moviesListView);
         final ConsultaActivity.CustomAdapter  customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
@@ -91,7 +90,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                             MoviesList.remove(Selected);
                             MoviesList.add(tempSelected);
                             populateData(Selected);
-                            populateRecomemnded(MoviesList,Selected);
+                            populateRecommended(MoviesList,Selected);
                             customAdapter.notifyDataSetChanged();
                             break;
                         }
@@ -110,12 +109,19 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             finish();
         }
     }
-    /** Called when the user taps the Play trailer button */
+    /** Called when the user taps the Play trailer button or gesture T */
     public void PlayTrailer(View view) {
 
         StringRequest stringRequest = searchNameStringRequest(title,year);
 
         queue.add(stringRequest);
+    }
+    /**Called when the user taps the Play movie button or gesture M */
+    public void playMovie(View view) {
+        Intent intent = new Intent(this, PlayerActivity.class);
+        intent.putExtra("title", title);
+        intent.putExtra("year", year);
+        startActivity(intent);
     }
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
@@ -154,11 +160,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
 ;
 
 
-    }
-    /**Open activity  player*/
-    public void playMovie(View view) {
-        Intent intent = new Intent(this, PlayerActivity.class);
-        startActivity(intent);
     }
     /**Open youtube video*/
     public static void watchYoutubeVideo(Context context, String id) {
@@ -200,7 +201,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                     }
                 });}
     /** to populate the recommended for you */
-    public void populateRecomemnded(ArrayList<String> moviesList,String selected) {
+    public void populateRecommended(ArrayList<String> moviesList,String selected) {
         IMAGES= new ArrayList <Integer>();
         NAMES = new ArrayList<String>();
         YEARS=  new ArrayList<String>();
@@ -226,16 +227,22 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                 String titleRecomemended = result.getString("Title");
                 String yearRecomemended = result.getString("Year");
                 String durationRecomemended = result.getString("Runtime");
-                boolean findGenre;
-                findGenre=false;
+                boolean findGenre1, findGenre2;
+                findGenre1=false;
+                findGenre2=false;
                 //List of genre selected
                 for(String genre :selectedGenreList )
                 {
-                    if ( genreRecomemended.toLowerCase().indexOf(genre.toLowerCase()) != -1 ) {
-                        findGenre = true;
+                    if ( genreRecomemended.toLowerCase().contains(genre.toLowerCase()) ) {
+                        if(findGenre1==true)
+                        {
+                            findGenre2=true;
+                        }
+                        findGenre1 = true;
+                        }
                     }
-                }
-                if(findGenre==true)
+
+                if(findGenre1 && findGenre2)
                 {
                     //IMAGEM
                     IMAGES.add(getImagesMovies(titleRecomemended,yearRecomemended));
@@ -295,10 +302,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
 
 
     }
-    /**For creating the recomendations list*/
-    public void openButton(String Gesture){
-
-    }
+    /**For the recommend list*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
@@ -337,6 +341,3 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
 
 }
-
-
-
