@@ -71,13 +71,13 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         /**for the api of youtube*/
         queue = Volley.newRequestQueue(this);
         /**For the Recommend list and click in one item from the list*/
-        final ListView listView=(ListView)findViewById(R.id.moviesListView);
+        final ListView listView=findViewById(R.id.moviesListView);
         final ConsultaActivity.CustomAdapter  customAdapter = new ConsultaActivity.CustomAdapter();
         listView.setAdapter(customAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TextView textView = (TextView) view.findViewById(R.id.MovieNameTextView);
+                TextView textView = view.findViewById(R.id.MovieNameTextView);
                 String MovieSeleted=(textView.getText()+"");
                 for (String movies :MoviesList ) {
                     try {
@@ -102,7 +102,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             }
         });
         /**For the gestures*/
-        GestureOverlayView gestureOverlayView = (GestureOverlayView)findViewById(R.id.gestures);
+        GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
         gestureOverlayView.addOnGesturePerformedListener(this);
         gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturejoao);
         if (!gestureLib.load()) {
@@ -111,9 +111,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
     /** Called when the user taps the Play trailer button or gesture T */
     public void PlayTrailer(View view) {
-
         StringRequest stringRequest = searchNameStringRequest(title,year);
-
         queue.add(stringRequest);
     }
     /**Called when the user taps the Play movie button or gesture M */
@@ -125,7 +123,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
-
         try {
             JSONObject result = new JSONObject(jsonToParse);
             //Log.d("aa",result.toString())
@@ -135,12 +132,9 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             genre = result.getString("Genre");
             rating = result.getString("imdbRating");
             Plot = result.getString("Plot");
-
-
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-
         //** Populate Form*/
         TextView textview_title = findViewById(R.id.textView_movieName);
         textview_title.setText(title);
@@ -157,9 +151,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
         imageView_MainMoview.setImageResource(getImagesMovies(title,year));
-;
-
-
     }
     /**Open youtube video*/
     public static void watchYoutubeVideo(Context context, String id) {
@@ -212,7 +203,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             JSONObject result = new JSONObject(selected);
             String genreRecomemended = result.getString("Genre");
             selectedGenreList = Arrays.asList(genreRecomemended.split(","));
-            //Log.d("teste",selectedGenreList.toString());
 
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -221,8 +211,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         for (String movies : moviesList) {
             try {
                 JSONObject result = new JSONObject(movies);
-                //Log.d("aa",result.toString())
-
                 String genreRecomemended = result.getString("Genre");
                 String titleRecomemended = result.getString("Title");
                 String yearRecomemended = result.getString("Year");
@@ -261,29 +249,24 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         //Remove spaces
         movieName=movieName.replaceAll("\\s+","");
         movieYear=movieYear.replaceAll("\\s+","");
-
         //remove accents
         movieName = Normalizer.normalize(movieName, Normalizer.Form.NFD);
         movieName = movieName.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
-
         //to lowercase
         movieName= movieName.toLowerCase();
         movieYear= movieYear.toLowerCase();
         //Get Image
         String image = movieName+movieYear;
         int returnImage = getResources().getIdentifier(image , "drawable", getPackageName());
-
         return returnImage;
     }
     /**For the gestures*/
     @Override
     public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
         ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
-
         for (Prediction prediction : predictions) {
             if (prediction.score > 1.0)
             {
-
                 if(prediction.name.equals("movie"))
                 {
                     Button button_playMovie = findViewById(R.id.button_playMovie);
@@ -299,27 +282,21 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                 }
             }
             }
-
-
     }
     /**For the recommend list*/
     class CustomAdapter extends BaseAdapter {
-
         @Override
         public int getCount() {
             return IMAGES.size();
         }
-
         @Override
         public Object getItem(int position) {
             return null;
         }
-
         @Override
         public long getItemId(int position) {
             return 0;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             convertView = getLayoutInflater().inflate(R.layout.elemento_listagem, null);
@@ -328,14 +305,12 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             TextView textViewYear = (TextView) convertView.findViewById(R.id.MovieYearTextView);
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
-
             imageView.setImageResource(IMAGES.get(position));
             textViewName.setText(NAMES.get(position));
             textViewName.setTextSize(16);
             textViewYear.setText(YEARS.get(position));
             textViewCategorie.setText(CATEGORIES.get(position));
             textViewDuration.setText(DURATIONS.get(position));
-
             return convertView;
         }
     }
