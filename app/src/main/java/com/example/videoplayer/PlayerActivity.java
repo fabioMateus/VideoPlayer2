@@ -4,6 +4,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.MediaController;
@@ -12,6 +13,7 @@ import android.widget.VideoView;
 import android.os.Build;
 
 public class PlayerActivity extends AppCompatActivity {
+    String movie_file_name;
 
     private int currentApiVersion;
 
@@ -24,6 +26,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        /**Get the data from  MainActivity*/
+        movie_file_name= getIntent().getStringExtra("movie");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
@@ -62,9 +67,11 @@ public class PlayerActivity extends AppCompatActivity {
 
         mediacontroller = new MediaController(this);
         mediacontroller.setAnchorView(vv);
-        String uriPath = "https://www.demonuts.com/Demonuts/smallvideo.mp4"; //update package name
-        uri = Uri.parse(uriPath);
 
+        String uriPath = "android.resource://" + getPackageName() + "/raw/" + getMovieFile(movie_file_name); //"/raw/" + getMovieFile(movie_file_name); //update package name
+        // String uriPath = "https://www.demonuts.com/Demonuts/smallvideo.mp4"; //update package name
+        uri = Uri.parse(uriPath);
+        Log.d("MOVIE_FILE", uriPath);
         vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -119,6 +126,14 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
+        //starts playing the video
+        btnonce.callOnClick();
+    }
+
+    /**Get file for the movie*/
+    public int getMovieFile(String movieName){
+        int file_id = getResources().getIdentifier(movieName , "raw", getPackageName());
+        return file_id;
     }
 
 }
