@@ -28,6 +28,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
+import java.io.File;
+import java.io.InputStream;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -116,10 +119,9 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
     /**Called when the user taps the Play movie button or gesture M */
     public void playMovie(View view) {
-        Intent intent = new Intent(this, PlayerActivity.class);
-        intent.putExtra("title", title);
-        intent.putExtra("year", year);
-        startActivity(intent);
+       Intent intent = new Intent(this, PlayerActivity.class);
+       intent.putExtra("movie", parseNameYear(title,year));
+       startActivity(intent);
     }
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
@@ -244,8 +246,8 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             }
         }
     }
-    /**Get image for the movies*/
-    public int getImagesMovies (String movieName, String movieYear){
+    /**Parse string in correct format*/
+    public String parseNameYear(String movieName, String movieYear){
         //Remove spaces
         movieName=movieName.replaceAll("\\s+","");
         movieYear=movieYear.replaceAll("\\s+","");
@@ -255,8 +257,13 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         //to lowercase
         movieName= movieName.toLowerCase();
         movieYear= movieYear.toLowerCase();
+        return movieName+movieYear;
+    }
+    /**Get image for the movies*/
+    public int getImagesMovies (String movieName, String movieYear){
+
         //Get Image
-        String image = movieName+movieYear;
+        String image =  parseNameYear(movieName,movieYear);
         int returnImage = getResources().getIdentifier(image , "drawable", getPackageName());
         return returnImage;
     }
