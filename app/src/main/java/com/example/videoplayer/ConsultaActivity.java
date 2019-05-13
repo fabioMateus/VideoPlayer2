@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
@@ -15,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -28,9 +31,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-
-import java.io.File;
-import java.io.InputStream;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,13 +59,16 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     private RequestQueue queue;
     /**To Gestures*/
     private GestureLibrary gestureLib;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
         MoviesListArray= getIntent().getStringArrayExtra("MoviesList");
         MoviesList= new ArrayList<>(Arrays.asList(MoviesListArray));
         Selected=getIntent().getStringExtra("Selected");
+        /**Force Orientation Portrait*/
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         /**Populate data*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
@@ -261,7 +264,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
     /**Get image for the movies*/
     public int getImagesMovies (String movieName, String movieYear){
-
         //Get Image
         String image =  parseNameYear(movieName,movieYear);
         int returnImage = getResources().getIdentifier(image , "drawable", getPackageName());
