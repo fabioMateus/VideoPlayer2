@@ -307,16 +307,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
 
     /**
-     * Get image for the movies
-     */
-    public int getImagesMovies(String movieName, String movieYear) {
-        //Get Image
-        String image = parseNameYear(movieName, movieYear);
-        int returnImage = getResources().getIdentifier(image, "drawable", getPackageName());
-        return returnImage;
-    }
-
-    /**
      * For the gestures
      */
     @Override
