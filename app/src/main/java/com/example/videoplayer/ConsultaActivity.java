@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
 import android.gesture.GestureLibrary;
@@ -15,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import android.content.Context;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -59,13 +62,16 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     private RequestQueue queue;
     /**To Gestures*/
     private GestureLibrary gestureLib;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
 
         MoviesList= getIntent().getExtras().getStringArrayList("MoviesList");
         Selected=getIntent().getStringExtra("Selected");
+        /**Force Orientation Portrait*/
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         /**Populate data*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
@@ -119,10 +125,9 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     }
     /**Called when the user taps the Play movie button or gesture M */
     public void playMovie(View view) {
-        Intent intent = new Intent(this, PlayerActivity.class);
-        intent.putExtra("title", title);
-        intent.putExtra("year", year);
-        startActivity(intent);
+       Intent intent = new Intent(this, PlayerActivity.class);
+       intent.putExtra("movie", parseNameYear(title,year));
+       startActivity(intent);
     }
     /**Used to parse the json and after parse populate the form with info from json*/
     public void populateData(String jsonToParse){
@@ -250,8 +255,8 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             }
         }
     }
-    /**Get image for the movies*/
-    public int getImagesMovies (String movieName, String movieYear){
+    /**Parse string in correct format*/
+    public String parseNameYear(String movieName, String movieYear){
         //Remove spaces
         movieName=movieName.replaceAll("\\s+","");
         movieYear=movieYear.replaceAll("\\s+","");
@@ -261,8 +266,12 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         //to lowercase
         movieName= movieName.toLowerCase();
         movieYear= movieYear.toLowerCase();
+        return movieName+movieYear;
+    }
+    /**Get image for the movies*/
+    public int getImagesMovies (String movieName, String movieYear){
         //Get Image
-        String image = movieName+movieYear;
+        String image =  parseNameYear(movieName,movieYear);
         int returnImage = getResources().getIdentifier(image , "drawable", getPackageName());
         return returnImage;
     }
