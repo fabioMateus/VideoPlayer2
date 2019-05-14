@@ -41,7 +41,6 @@ import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 
 public class ConsultaActivity extends AppCompatActivity implements OnGesturePerformedListener{
     /**Arrays of movies*/
-    String[] MoviesListArray;
     ArrayList<String> MoviesList = new ArrayList<>();
     String Selected;
     /**To the scrollbar*/
@@ -65,7 +64,6 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
-
         MoviesList= getIntent().getExtras().getStringArrayList("MoviesList");
         Selected=getIntent().getStringExtra("Selected");
         /**Force Orientation Portrait*/
@@ -143,7 +141,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             Poster = result.getString("Poster");
 
         } catch (JSONException e) {
-            Log.d("POPULATEEEEEEE", "populateData: aquiii");
+            Log.e("ERROR",e.getMessage());
         }
         //** Populate Form*/
         TextView textview_title = findViewById(R.id.textView_movieName);
@@ -191,7 +189,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                     watchYoutubeVideo(ConsultaActivity.this,VideoId);
 
                 } catch (JSONException e) {
-                    Toast.makeText(ConsultaActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+                    Log.e("ERROR",e.getMessage());
                 }
             }
         },
@@ -251,7 +249,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                     CATEGORIES.add(genreRecomemended);
                 }
             } catch (JSONException e) {
-                throw new RuntimeException(e);
+                Log.e("ERROR",e.getMessage());
             }
         }
     }
