@@ -148,6 +148,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
      * Called when the user taps the Play movie button or gesture M
      */
     public void playMovie(View view) {
+        Log.d("teste",parseNameYear(title, year));
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("movie", parseNameYear(title, year));
         startActivity(intent);
@@ -294,13 +295,11 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
      */
     public String parseNameYear(String movieName, String movieYear) {
         //Remove spaces
-        movieName = movieName.replaceAll("\\s+", "");
         movieYear = movieYear.replaceAll("\\s+", "");
         //remove accents
         movieName = Normalizer.normalize(movieName, Normalizer.Form.NFD);
         movieName = movieName.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
         //to lowercase
-        movieName = movieName.toLowerCase();
         movieYear = movieYear.toLowerCase();
         return movieName + movieYear;
     }
