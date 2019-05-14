@@ -112,8 +112,8 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         /**For the gestures*/
         GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
         /**hide the gesture (change if need)*/
-        gestureOverlayView.setGestureColor(Color.TRANSPARENT);
-        gestureOverlayView.setUncertainGestureColor(Color.TRANSPARENT);
+        gestureOverlayView.setGestureColor(Color.YELLOW);
+        gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
         /***/
         gestureOverlayView.addOnGesturePerformedListener(this);
         gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturejoao);
