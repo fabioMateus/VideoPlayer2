@@ -28,6 +28,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.squareup.picasso.Picasso;
+
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,10 +39,10 @@ import android.gesture.GestureOverlayView.OnGesturePerformedListener;
 public class ConsultaActivity extends AppCompatActivity implements OnGesturePerformedListener{
     /**Arrays of movies*/
     String[] MoviesListArray;
-    ArrayList<String> MoviesList;
+    ArrayList<String> MoviesList = new ArrayList<>();
     String Selected;
     /**To the scrollbar*/
-    ArrayList <Integer> IMAGES;
+    ArrayList<String> IMAGES;
     ArrayList<String> NAMES;
     ArrayList<String> YEARS;
     ArrayList<String> DURATIONS;
@@ -52,6 +54,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     String genre;
     String rating;
     String Plot;
+    String Poster;
     /**To the API*/
     private RequestQueue queue;
     /**To Gestures*/
@@ -60,8 +63,8 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
-        MoviesListArray= getIntent().getStringArrayExtra("MoviesList");
-        MoviesList= new ArrayList<>(Arrays.asList(MoviesListArray));
+
+        MoviesList= getIntent().getExtras().getStringArrayList("MoviesList");
         Selected=getIntent().getStringExtra("Selected");
         /**Populate data*/
         super.onCreate(savedInstanceState);
@@ -132,8 +135,10 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             genre = result.getString("Genre");
             rating = result.getString("imdbRating");
             Plot = result.getString("Plot");
+            Poster = result.getString("Poster");
+
         } catch (JSONException e) {
-            throw new RuntimeException(e);
+            Log.d("POPULATEEEEEEE", "populateData: aquiii");
         }
         //** Populate Form*/
         TextView textview_title = findViewById(R.id.textView_movieName);
@@ -150,7 +155,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         textview_plot.setText(Plot);
         //IMAGEM
         ImageView imageView_MainMoview = (findViewById(R.id.imageView_MainMovie));
-        imageView_MainMoview.setImageResource(getImagesMovies(title,year));
+        Picasso.get().load(Poster).into(imageView_MainMoview);
     }
     /**Open youtube video*/
     public static void watchYoutubeVideo(Context context, String id) {
@@ -193,7 +198,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                 });}
     /** to populate the recommended for you */
     public void populateRecommended(ArrayList<String> moviesList,String selected) {
-        IMAGES= new ArrayList <Integer>();
+        IMAGES= new ArrayList<String>();
         NAMES = new ArrayList<String>();
         YEARS=  new ArrayList<String>();
         DURATIONS= new ArrayList<String>();
@@ -215,6 +220,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                 String titleRecomemended = result.getString("Title");
                 String yearRecomemended = result.getString("Year");
                 String durationRecomemended = result.getString("Runtime");
+                String imageRecomemended = result.getString("Poster");
                 boolean findGenre1, findGenre2;
                 findGenre1=false;
                 findGenre2=false;
@@ -233,7 +239,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
                 if(findGenre1 && findGenre2)
                 {
                     //IMAGEM
-                    IMAGES.add(getImagesMovies(titleRecomemended,yearRecomemended));
+                    IMAGES.add(imageRecomemended);
                     NAMES.add(titleRecomemended);
                     YEARS.add(yearRecomemended);
                     DURATIONS.add(durationRecomemended);
@@ -305,7 +311,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
             TextView textViewYear = (TextView) convertView.findViewById(R.id.MovieYearTextView);
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
-            imageView.setImageResource(IMAGES.get(position));
+            Picasso.get().load(IMAGES.get(position)).into(imageView);
             textViewName.setText(NAMES.get(position));
             textViewName.setTextSize(16);
             textViewYear.setText(YEARS.get(position));
