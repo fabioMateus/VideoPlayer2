@@ -37,7 +37,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.squareup.picasso.Picasso;
-
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
