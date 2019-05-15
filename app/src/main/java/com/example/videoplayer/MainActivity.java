@@ -7,19 +7,24 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import okhttp3.Call;
@@ -40,6 +45,11 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> DURATIONS = new ArrayList<String>();
     ArrayList<String> CATEGORIES = new ArrayList<String>();
 
+    Boolean SORTEDBYTITLE = false;
+    Boolean SORTEDBYYEAR = false;
+    Boolean SORTEDBYDURATION = false;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,20 +63,34 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ListView listView=(ListView)findViewById(R.id.moviesListView);
 
-
-
-
-
-
-        CustomAdapter customAdapter = new CustomAdapter();
+        final CustomAdapter customAdapter = new CustomAdapter();
         listView.setAdapter(customAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //Seu codigo aqui
-                Log.d("CLICK ONNN", "onItemClick: " + id);
                 previewMovie(view, position);
+            }
+        });
+
+        final Button orderByTitleButton = findViewById(R.id.orderByTitleButton);
+        orderByTitleButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("title", customAdapter);
+            }
+        });
+
+        final Button orderByYearButton = findViewById(R.id.orderByYearButton);
+        orderByYearButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("year", customAdapter);
+            }
+        });
+
+        final Button orderByDurationButton = findViewById(R.id.orderByDurationButton);
+        orderByDurationButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("duration", customAdapter);
             }
         });
     }
@@ -115,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
+    /**Adiciona a informação dos filmes às listas de informações*/
     public void addMovieInfoToLists(String Response) {
         try {
             JSONObject movieObject = new JSONObject(Response);
@@ -134,34 +158,130 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     /** Called when the user taps the movie line*/
     public void previewMovie(View view, Integer position) {
 
+        //Obtém o filme que foi escolhido
         String selected = MOVIES.get(position);
 
+        //Duplica a lista com todos os filmes e elimina o que foi selecionado
         moviesToSend = new ArrayList<>(MOVIES);
         moviesToSend.remove(selected);
 
+        //Inicia a Actividade para visualizar a informação do filme
         Intent intent = new Intent(this, ConsultaActivity.class);
         intent.putStringArrayListExtra("MoviesList", moviesToSend);
         intent.putExtra("Selected", selected);
         startActivity(intent);
     }
 
+    /**Função utilizada para ordenar os filmes e atualizar a listagem*/
+    public void orderByParameter(String orderBy, CustomAdapter adapter) {
+        // Possiveis parametros: title, year, duration
 
+        //Cria uma lista de jsons para depois poder ordenar utilizando o collections acedendo aos campos pretendidos
+        ArrayList<JSONObject> array = new ArrayList<JSONObject>();
+        for (int i = 0; i < MOVIES.size(); i++) {
+            try {
+                JSONObject obj = new JSONObject(MOVIES.get(i));
+                array.add(obj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
 
+        switch (orderBy){
+            case "title":
+                //caso já estejam ordenados pelo titulo, ordena pela ordem contrária
+                if (SORTEDBYTITLE) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                return (lhs.getString("Title").toLowerCase().compareTo(rhs.getString("Title").toLowerCase()));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = true;
+                    SORTEDBYYEAR = false;
+                    SORTEDBYDURATION = false;
+                }
+                break;
+            case "year":
+                //caso já estejam ordenados pelo ano, ordena pela ordem contrária
+                if (SORTEDBYYEAR) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                return (lhs.getString("Year").toLowerCase().compareTo(rhs.getString("Year").toLowerCase()));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = false;
+                    SORTEDBYYEAR = true;
+                    SORTEDBYDURATION = false;
+                }
+                break;
+            case "duration":
+                //caso já estejam ordenados pela duração, ordena pela ordem contrária
+                if (SORTEDBYDURATION) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                //Para retirar o " min" e converter para inteiro e poder comparar
+                                Integer int1 = Integer.parseInt(lhs.getString("Runtime").substring(0, lhs.getString("Runtime").length() - 4));
+                                Integer int2 = Integer.parseInt(rhs.getString("Runtime").substring(0, rhs.getString("Runtime").length() - 4));
+                                return (int1 - int2);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = false;
+                    SORTEDBYYEAR = false;
+                    SORTEDBYDURATION = true;
+                }
+                break;
+            default:
+                break;
+        }
+
+        //Limpa todas as listas para as colocar pela ordem correta
+        MOVIES.clear();
+        NAMES.clear();
+        IMAGES.clear();
+        YEARS.clear();
+        DURATIONS.clear();
+        CATEGORIES.clear();
+
+        for (int i = 0; i < array.size(); i++) {
+            MOVIES.add(array.get(i).toString());
+            addMovieInfoToLists(array.get(i).toString());
+        }
+
+        adapter.notifyDataSetChanged();
+    }
+
+    public void refreshMoviesList () {
+
+    }
+
+    /**Adapter to the listView*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
@@ -197,5 +317,4 @@ public class MainActivity extends AppCompatActivity {
             return convertView;
         }
     }
-
 }
