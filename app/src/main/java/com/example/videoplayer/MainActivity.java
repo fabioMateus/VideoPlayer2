@@ -2,6 +2,12 @@ package com.example.videoplayer;
 
 import android.content.Context;
 import android.content.Intent;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.Prediction;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,7 +39,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements GestureOverlayView.OnGesturePerformedListener {
 
     String[] MOVIESNAME;
     ArrayList<String> MOVIES = new ArrayList<String>();
@@ -49,7 +55,10 @@ public class MainActivity extends AppCompatActivity {
     Boolean SORTEDBYYEAR = false;
     Boolean SORTEDBYDURATION = false;
 
-
+    /**
+     * To Gestures
+     */
+    private GestureLibrary gestureLib;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +102,46 @@ public class MainActivity extends AppCompatActivity {
                 orderByParameter("duration", customAdapter);
             }
         });
+
+        /**For the gestures*/
+        GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
+        /**hide the gesture (change if need)*/
+        gestureOverlayView.setGestureColor(Color.YELLOW);
+        gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
+        /***/
+        gestureOverlayView.addOnGesturePerformedListener((GestureOverlayView.OnGesturePerformedListener) this);
+        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturefabio);
+        if (!gestureLib.load()) {
+            finish();
+        }
+    }
+
+    /**
+     * For the gestures
+     */
+    @Override
+    public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+        ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
+        for (Prediction prediction : predictions) {
+            if (prediction.score > 1.0) {
+                if (prediction.name.equals("title")) {
+                    Button orderByTitleButton = findViewById(R.id.orderByTitleButton);
+                    orderByTitleButton.performClick();
+                    Log.d("sadsadsadsad", "onGesturePerformed: titulo");
+                    break;
+                } else if (prediction.name.equals("year")) {
+                    Button orderByYearButton = findViewById(R.id.orderByYearButton);
+                    orderByYearButton.performClick();
+                    Log.d("sdadsadsadasdasd", "onGesturePerformed: ano");
+                    break;
+                } else if (prediction.name.equals("duration")) {
+                    Button orderByDurationButton = findViewById(R.id.orderByDurationButton);
+                    orderByDurationButton.performClick();
+                    Log.d("sdadsadsadasdasd", "onGesturePerformed: duration");
+                    break;
+                }
+            }
+        }
     }
 
     /** Called to load all movies names on the device*/
