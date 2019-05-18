@@ -1,80 +1,423 @@
 package com.example.videoplayer;
 
+import android.content.Context;
 import android.content.Intent;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.Prediction;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+import com.squareup.picasso.Picasso;
 
-    int[] IMAGES = {R.drawable.movie1, R.drawable.movie2, R.drawable.movie3, R.drawable.movie5, R.drawable.movie6, R.drawable.movie7,
-            R.drawable.movie1, R.drawable.movie2, R.drawable.movie3, R.drawable.movie5, R.drawable.movie6, R.drawable.movie7};
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-    String[] NAMES = {"Movie 1", "Movie 2", "Movie 3", "Movie 5", "Movie 6", "Movie 7",
-            "Movie 8", "Movie 9", "Movie 10", "Movie 12", "Movie 13", "Movie 14"};
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
-    String[] YEARS = {"2015","2015","2015","2015","2015","2015","2015","2015","2015","2015","2015","2015"};
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-    String[] DURATIONS = {"215","215","215","015","205","215","15","205","215","015","205","201"};
+public class MainActivity extends AppCompatActivity implements GestureOverlayView.OnGesturePerformedListener {
 
-    String[] CATEGORIES = {"Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy",
-            "Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy","Action, Comedy"};
+    String[] MOVIESNAME;
+    ArrayList<String> MOVIES = new ArrayList<String>();
+    ArrayList<String> MOVIESCOMPLETELSIT = new ArrayList<String>();
+    ArrayList<String> moviesToSend;
+
+    ArrayList<String> IMAGES = new ArrayList<String>();
+    ArrayList<String> NAMES = new ArrayList<String>();
+    ArrayList<String> YEARS = new ArrayList<String>();
+    ArrayList<String> DURATIONS = new ArrayList<String>();
+    ArrayList<String> CATEGORIES = new ArrayList<String>();
+
+    Boolean SORTEDBYTITLE = false;
+    Boolean SORTEDBYYEAR = false;
+    Boolean SORTEDBYDURATION = false;
+
+    CustomAdapter customAdapter;
+
+    /**
+     * To Gestures
+     */
+    private GestureLibrary gestureLib;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loadAllMoviesNames(this);
+
+        for (String movie: MOVIESNAME) {
+            getMovieInfo(movie);
+        }
+
         setContentView(R.layout.activity_main);
-
-
-
         ListView listView=(ListView)findViewById(R.id.moviesListView);
 
-
-
-        CustomAdapter customAdapter = new CustomAdapter();
+        customAdapter = new CustomAdapter();
         listView.setAdapter(customAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //Seu codigo aqui
-                Log.d("TEsSS", "onItemClick: " + id);
-                String data = "Some Data";
-                previewMovie(view, data);
+                previewMovie(view, position);
+            }
+        });
+
+        final Button orderByTitleButton = findViewById(R.id.orderByTitleButton);
+        orderByTitleButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("title", customAdapter);
+            }
+        });
+
+        final Button orderByYearButton = findViewById(R.id.orderByYearButton);
+        orderByYearButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("year", customAdapter);
+            }
+        });
+
+        final Button orderByDurationButton = findViewById(R.id.orderByDurationButton);
+        orderByDurationButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                orderByParameter("duration", customAdapter);
+            }
+        });
+
+        /**For the gestures*/
+        GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
+        /**hide the gesture (change if need)*/
+        gestureOverlayView.setGestureColor(Color.YELLOW);
+        gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
+        /***/
+        gestureOverlayView.addOnGesturePerformedListener((GestureOverlayView.OnGesturePerformedListener) this);
+        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturefabio);
+        if (!gestureLib.load()) {
+            finish();
+        }
+    }
+
+    /**For search option*/
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.search_menu, menu);
+        MenuItem item= menu.findItem(R.id.search_title);
+        SearchView searchView = (SearchView)item.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterByTitle(newText);
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public void filterByTitle(String filter) {
+        //Cria uma lista de jsons para depois poder filtrar pelo titulo
+        ArrayList<JSONObject> array = new ArrayList<JSONObject>();
+        for (int i = 0; i < MOVIESCOMPLETELSIT.size(); i++) {
+            try {
+                JSONObject obj = new JSONObject(MOVIESCOMPLETELSIT.get(i));
+                array.add(obj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //Lista de filmes filtrados
+        ArrayList<JSONObject> arrayFiltrado = new ArrayList<JSONObject>();
+
+        for (JSONObject filme:array) {
+
+            try {
+                if (filme.getString("Title").toLowerCase().contains(filter.toLowerCase())) {
+                    Log.d("sadsad", "MATCH");
+                    arrayFiltrado.add(filme);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        //Cria uma copia dos filmes existentes
+        MOVIESCOMPLETELSIT.clear();
+        for (int i = 0; i < array.size(); i++) {
+            MOVIESCOMPLETELSIT.add(array.get(i).toString());
+            addMovieInfoToLists(array.get(i).toString());
+        }
+
+        //Limpa todas as listas para as colocar pela ordem correta
+        MOVIES.clear();
+        NAMES.clear();
+        IMAGES.clear();
+        YEARS.clear();
+        DURATIONS.clear();
+        CATEGORIES.clear();
+
+        for (int i = 0; i < arrayFiltrado.size(); i++) {
+            MOVIES.add(arrayFiltrado.get(i).toString());
+            addMovieInfoToLists(arrayFiltrado.get(i).toString());
+        }
+
+        customAdapter.notifyDataSetChanged();
+    }
+
+    /**
+     * For the gestures
+     */
+    @Override
+    public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+        ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
+        for (Prediction prediction : predictions) {
+            if (prediction.score > 1.0) {
+                if (prediction.name.equals("title")) {
+                    Button orderByTitleButton = findViewById(R.id.orderByTitleButton);
+                    orderByTitleButton.performClick();
+                    Log.d("sadsadsadsad", "onGesturePerformed: titulo");
+                    break;
+                } else if (prediction.name.equals("year")) {
+                    Button orderByYearButton = findViewById(R.id.orderByYearButton);
+                    orderByYearButton.performClick();
+                    Log.d("sdadsadsadasdasd", "onGesturePerformed: ano");
+                    break;
+                } else if (prediction.name.equals("duration")) {
+                    Button orderByDurationButton = findViewById(R.id.orderByDurationButton);
+                    orderByDurationButton.performClick();
+                    Log.d("sdadsadsadasdasd", "onGesturePerformed: duration");
+                    break;
+                }
+            }
+        }
+    }
+
+    /** Called to load all movies names on the device*/
+    public void loadAllMoviesNames (Context context) {
+        try {
+            MOVIESNAME = context.getAssets().list("movies");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**Function that get the movies info from OMBD API using name and year*/
+    public void getMovieInfo(String movie) {
+        String name = movie.substring(0,movie.length() - 8);
+        String year = movie.substring(movie.length() - 8, movie.length() - 4);
+
+        OkHttpClient client = new OkHttpClient();
+        String url = "http://www.omdbapi.com/?apikey=254bcab9&t="+name+"&y="+year;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    final String myResponse = response.body().string();
+
+                    MainActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            MOVIESCOMPLETELSIT.add(myResponse);
+                            MOVIES.add(myResponse);
+                           addMovieInfoToLists(myResponse);
+                        }
+                    });
+                }
             }
         });
     }
 
+    /**Adiciona a informação dos filmes às listas de informações*/
+    public void addMovieInfoToLists(String Response) {
+        try {
+            JSONObject movieObject = new JSONObject(Response);
+            if (movieObject.getString("Poster").isEmpty()) {
+                IMAGES.add("http://i.imgur.com/DvpvklR.png");
+            } else {
+                IMAGES.add(movieObject.getString("Poster"));
+            }
 
+            NAMES.add(movieObject.getString("Title"));
+            YEARS.add(movieObject.getString("Year"));
+            DURATIONS.add(movieObject.getString("Runtime"));
+            CATEGORIES.add(movieObject.getString("Genre"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
+    /** Called when the user taps the movie line*/
+    public void previewMovie(View view, Integer position) {
 
-    /** Called when the user taps the Send button */
-    public void previewMovie(View view, String data) {
-        String selected="{\"Title\":\"aquaman\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"21 Dec 2018\",\"Runtime\":\"143 min\",\"Genre\":\"Action,Fantasy, Sci-Fi\",\"Director\":\"James Wan\",\"Writer\":\"David Leslie Johnson-McGoldrick (screenplay by), Will Beall (screenplay by), Geoff Johns (story by), James Wan (story by), Will Beall (story by), Mort Weisinger (Aquaman created by), Paul Norris (Aquaman created by)\",\"Actors\":\"Jason Momoa, Amber Heard, Willem Dafoe, Patrick Wilson\",\"Plot\":\"Arthur Curry, the human-born heir to the underwater kingdom of Atlantis, goes on a quest to prevent a war between the worlds of ocean and land.\",\"Language\":\"English\",\"Country\":\"Australia, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BOTk5ODg0OTU5M15BMl5BanBnXkFtZTgwMDQ3MDY3NjM@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.2/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"65%\"},{\"Source\":\"Metacritic\",\"Value\":\"55/100\"}],\"Metascore\":\"55\",\"imdbRating\":\"7.2\",\"imdbVotes\":\"236,813\",\"imdbID\":\"tt1477834\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://www.aquamanmovie.com/\"}";
+        //Obtém o filme que foi escolhido
+        String selected = MOVIES.get(position);
 
-        String[] moviesList= {
-                "{\"Title\":\"Mission: Impossible - Fallout\",\"Year\":\"2018\",\"Rated\":\"PG-13\",\"Released\":\"27 Jul 2018\",\"Runtime\":\"147 min\",\"Genre\":\"Action, Adventure, Thriller\",\"Director\":\"Christopher McQuarrie\",\"Writer\":\"Bruce Geller (based on the television series created by), Christopher McQuarrie\",\"Actors\":\"Tom Cruise, Henry Cavill, Ving Rhames, Simon Pegg\",\"Plot\":\"Ethan Hunt and his IMF team, along with some familiar allies, race against time after a mission gone wrong.\",\"Language\":\"English, French\",\"Country\":\"USA, China, France, Norway\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BNjRlZmM0ODktY2RjNS00ZDdjLWJhZGYtNDljNWZkMGM5MTg0XkEyXkFqcGdeQXVyNjAwMjI5MDk@._V1_SX300.jpg\",\"Ratings\":[{\"Source\":\"Internet Movie Database\",\"Value\":\"7.8/10\"},{\"Source\":\"Rotten Tomatoes\",\"Value\":\"97%\"},{\"Source\":\"Metacritic\",\"Value\":\"86/100\"}],\"Metascore\":\"86\",\"imdbRating\":\"7.8\",\"imdbVotes\":\"224,022\",\"imdbID\":\"tt4912910\",\"Type\":\"movie\",\"DVD\":\"04 Dec 2018\",\"BoxOffice\":\"N/A\",\"Production\":\"Paramount Pictures\",\"Website\":\"https://www.missionimpossible.com/\",\"Response\":\"True\"}",
-                "{\"Title\":\"Pokémon Detective Pikachu\",\"Year\":\"2019\",\"Rated\":\"PG\",\"Released\":\"09 May 2019\",\"Runtime\":\"104 min\",\"Genre\":\"Action, Adventure, Comedy, Family, Mystery, Sci-Fi\",\"Director\":\"Rob Letterman\",\"Writer\":\"Dan Hernandez (screenplay by), Benji Samit (screenplay by), Rob Letterman (screenplay by), Derek Connolly (screenplay by), Dan Hernandez (story by), Benji Samit (story by), Nicole Perlman (story by), Satoshi Tajiri (based on \\\"Pokémon\\\" created by), Ken Sugimori (based on \\\"Pokémon\\\" created by), Junichi Masuda (based on \\\"Pokémon\\\" created by), Atsuko Nishida (characters), Tomokazu Ohara (original story), Haruka Utsui (original story)\",\"Actors\":\"Ryan Reynolds, Justice Smith, Kathryn Newton, Bill Nighy\",\"Plot\":\"In a world where people collect Pokémon to do battle, a boy comes across an intelligent talking Pikachu who seeks to be a detective.\",\"Language\":\"English\",\"Country\":\"Japan, USA\",\"Awards\":\"N/A\",\"Poster\":\"https://m.media-amazon.com/images/M/MV5BNDU4Mzc3NzE5NV5BMl5BanBnXkFtZTgwMzE1NzI1NzM@._V1_SX300.jpg\",\"Ratings\":[],\"Metascore\":\"N/A\",\"imdbRating\":\"N/A\",\"imdbVotes\":\"N/A\",\"imdbID\":\"tt5884052\",\"Type\":\"movie\",\"DVD\":\"N/A\",\"BoxOffice\":\"N/A\",\"Production\":\"Warner Bros. Pictures\",\"Website\":\"http://detectivepikachumovie.com/\",\"Response\":\"True\"}"
-        };
+        //Duplica a lista com todos os filmes e elimina o que foi selecionado
+        moviesToSend = new ArrayList<>(MOVIES);
+        moviesToSend.remove(selected);
 
+        //Inicia a Actividade para visualizar a informação do filme
         Intent intent = new Intent(this, ConsultaActivity.class);
-        intent.putExtra("MoviesList", moviesList);
+        intent.putStringArrayListExtra("MoviesList", moviesToSend);
         intent.putExtra("Selected", selected);
         startActivity(intent);
     }
 
+    /**Função utilizada para ordenar os filmes e atualizar a listagem*/
+    public void orderByParameter(String orderBy, CustomAdapter adapter) {
+        // Possiveis parametros: title, year, duration
+
+        //Cria uma lista de jsons para depois poder ordenar utilizando o collections acedendo aos campos pretendidos
+        ArrayList<JSONObject> array = new ArrayList<JSONObject>();
+        for (int i = 0; i < MOVIES.size(); i++) {
+            try {
+                JSONObject obj = new JSONObject(MOVIES.get(i));
+                array.add(obj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        switch (orderBy){
+            case "title":
+                //caso já estejam ordenados pelo titulo, ordena pela ordem contrária
+                if (SORTEDBYTITLE) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                return (lhs.getString("Title").toLowerCase().compareTo(rhs.getString("Title").toLowerCase()));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = true;
+                    SORTEDBYYEAR = false;
+                    SORTEDBYDURATION = false;
+                }
+                break;
+            case "year":
+                //caso já estejam ordenados pelo ano, ordena pela ordem contrária
+                if (SORTEDBYYEAR) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                return (lhs.getString("Year").toLowerCase().compareTo(rhs.getString("Year").toLowerCase()));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = false;
+                    SORTEDBYYEAR = true;
+                    SORTEDBYDURATION = false;
+                }
+                break;
+            case "duration":
+                //caso já estejam ordenados pela duração, ordena pela ordem contrária
+                if (SORTEDBYDURATION) {
+                    Collections.reverse(array);
+                } else {
+                    Collections.sort(array, new Comparator<JSONObject>() {
+                        @Override
+                        public int compare(JSONObject lhs, JSONObject rhs) {
+                            try {
+                                //Para retirar o " min" e converter para inteiro e poder comparar
+                                Integer int1 = Integer.parseInt(lhs.getString("Runtime").substring(0, lhs.getString("Runtime").length() - 4));
+                                Integer int2 = Integer.parseInt(rhs.getString("Runtime").substring(0, rhs.getString("Runtime").length() - 4));
+                                return (int1 - int2);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                return 0;
+                            }
+                        }
+                    });
+                    SORTEDBYTITLE = false;
+                    SORTEDBYYEAR = false;
+                    SORTEDBYDURATION = true;
+                }
+                break;
+            default:
+                break;
+        }
+
+        //Limpa todas as listas para as colocar pela ordem correta
+        MOVIES.clear();
+        NAMES.clear();
+        IMAGES.clear();
+        YEARS.clear();
+        DURATIONS.clear();
+        CATEGORIES.clear();
+
+        for (int i = 0; i < array.size(); i++) {
+            MOVIES.add(array.get(i).toString());
+            addMovieInfoToLists(array.get(i).toString());
+        }
+
+        adapter.notifyDataSetChanged();
+    }
+
+    public void refreshMoviesList () {
+
+    }
+
+    /**Adapter to the listView*/
     class CustomAdapter extends BaseAdapter {
 
         @Override
         public int getCount() {
-            return IMAGES.length;
+            return IMAGES.size();
         }
 
         @Override
@@ -96,14 +439,14 @@ public class MainActivity extends AppCompatActivity {
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
 
-            imageView.setImageResource(IMAGES[position]);
-            textViewName.setText(NAMES[position]);
-            textViewYear.setText(YEARS[position]);
-            textViewCategorie.setText(CATEGORIES[position]);
-            textViewDuration.setText(DURATIONS[position]+"min");
+            //Coloca na view os valores de cada filme
+            Picasso.get().load(IMAGES.get(position)).into(imageView);
+            textViewName.setText(NAMES.get(position));
+            textViewYear.setText(YEARS.get(position));
+            textViewCategorie.setText(CATEGORIES.get(position));
+            textViewDuration.setText(DURATIONS.get(position));
 
             return convertView;
         }
     }
-
 }
