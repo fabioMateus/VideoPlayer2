@@ -103,6 +103,17 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
             }
         });
 
+        final Button searchButton = findViewById(R.id.searchButton);
+        searchButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                //startActivity(new Intent(MainActivity.this, Popup.class));
+                Intent intent = new Intent(MainActivity.this, Popup.class);
+                //intent.putStringArrayListExtra("MoviesList", moviesToSend);
+                //intent.putExtra("Selected", selected);
+                startActivity(intent);
+            }
+        });
+
         /**For the gestures*/
         GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
         /**hide the gesture (change if need)*/
