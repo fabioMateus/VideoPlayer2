@@ -148,7 +148,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
      * Called when the user taps the Play movie button or gesture M
      */
     public void playMovie(View view) {
-        Log.d("teste",parseNameYear(title, year));
+        Log.d("PLAY_FILE_NAME",parseNameYear(title, year));
         Intent intent = new Intent(this, PlayerActivity.class);
         intent.putExtra("movie", parseNameYear(title, year));
         startActivity(intent);
