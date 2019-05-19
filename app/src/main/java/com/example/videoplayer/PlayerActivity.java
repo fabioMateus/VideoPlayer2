@@ -1,5 +1,12 @@
 package com.example.videoplayer;
 
+import android.content.pm.ActivityInfo;
+import android.gesture.Gesture;
+import android.gesture.GestureLibraries;
+import android.gesture.GestureLibrary;
+import android.gesture.GestureOverlayView;
+import android.gesture.Prediction;
+import android.graphics.Color;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,29 +15,39 @@ import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
-import android.os.Build;
+import java.util.ArrayList;
 
-public class PlayerActivity extends AppCompatActivity {
-    String movie_file_name;
+public class PlayerActivity extends AppCompatActivity implements GestureOverlayView.OnGesturePerformedListener {
+    String movie_file_name;     // saves the movie file name that was received by the previous activity
+    int pausedMilliSec;         // saves the movie current time when leaving the activity
+    boolean resumedActivity;    // indicates if the activity was paused
+    //int videoWidth;
+    //int videoHeight;
 
-    private int currentApiVersion;
-
-    private Button btnonce, btncontinuously, btnstop, btnplay;
     private VideoView vv;
     private MediaController mediacontroller;
     private Uri uri;
     private boolean isContinuously = false;
     private ProgressBar progressBar;
 
+    /** Gestures  */
+    private GestureLibrary gestureLib;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
-        movie_file_name= getIntent().getStringExtra("movie");
+        //TODO: change movie_file_name before push
+        //movie_file_name= getIntent().getStringExtra("movie");
+        movie_file_name= "Aquaman2018";
+        Log.d("FILE_NAME_RECIEVED", movie_file_name);
+
+        /**Force landscape orientation*/
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
@@ -50,9 +67,8 @@ public class PlayerActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
-        //listen for changes in the UI
-        overlay.setOnSystemUiVisibilityChangeListener
-                (new View.OnSystemUiVisibilityChangeListener() {
+        //listen for changes in the UI and hides it after a few seconds (status and navigation bar)
+        overlay.setOnSystemUiVisibilityChangeListener (new View.OnSystemUiVisibilityChangeListener() {
                      @Override
                      public void onSystemUiVisibilityChange(int visibility) {
                          // Note that system bars will only be "visible" if none of the
@@ -75,7 +91,7 @@ public class PlayerActivity extends AppCompatActivity {
                                              | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                              | View.SYSTEM_UI_FLAG_FULLSCREEN);
                                  }
-                             }, 4000);
+                             }, 3000);
 
 
                          } else {
@@ -86,21 +102,24 @@ public class PlayerActivity extends AppCompatActivity {
                      }
                  });
 
-
-                     progressBar = (ProgressBar) findViewById(R.id.progrss);
-        btnonce = (Button) findViewById(R.id.btnonce);
-        btncontinuously = (Button) findViewById(R.id.btnconti);
-        btnstop = (Button) findViewById(R.id.btnstop);
-        btnplay = (Button) findViewById(R.id.btnplay);
+        progressBar = new ProgressBar(this);
         vv = (VideoView) findViewById(R.id.vv);
 
         mediacontroller = new MediaController(this);
         mediacontroller.setAnchorView(vv);
 
-        String uriPath = "android.resource://" + getPackageName() + "/raw/" + getMovieFile(movie_file_name); //"/raw/" + getMovieFile(movie_file_name); //update package name
-         //String uriPath = "https://www.demonuts.com/Demonuts/smallvideo.mp4"; //update package name
-        uri = Uri.parse(uriPath);
-        Log.d("MOVIE_FILE", uriPath);
+        uri = Uri.parse("android.resource://"+getPackageName()+"/raw/" + movie_file_name.toLowerCase());
+        Log.d("MOVIE_PATH", uri.toString());
+
+        //starts playing the video
+        isContinuously = true;
+        progressBar.setVisibility(View.VISIBLE);
+        // media controller shoes video controls on click but interrupts immersive mode
+        // vv.setMediaController(mediacontroller);
+        vv.setVideoURI(uri);
+        vv.requestFocus();
+        vv.start();
+
         vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -110,59 +129,128 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-        btnstop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                vv.pause();
-            }
-        });
-
-        btnplay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                vv.start();
-            }
-        });
-
-        btnonce.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isContinuously = false;
-                progressBar.setVisibility(View.VISIBLE);
-                vv.setMediaController(mediacontroller);
-                vv.setVideoURI(uri);
-                vv.requestFocus();
-                vv.start();
-            }
-        });
-
-        btncontinuously.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                isContinuously = true;
-                progressBar.setVisibility(View.VISIBLE);
-                vv.setMediaController(mediacontroller);
-                vv.setVideoURI(uri);
-                vv.requestFocus();
-                vv.start();
-            }
-        });
-
         vv.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             // Close the progress bar and play the video
             public void onPrepared(MediaPlayer mp) {
+                // Resumes the video where it was when leaving the activity
+                if (resumedActivity) {
+                    mp.seekTo(pausedMilliSec);
+                }
+
+//                videoWidth = mp.getVideoWidth();
+//                videoHeight = mp.getVideoHeight();
+//                changeVideoSize(overlay);
+
                 progressBar.setVisibility(View.GONE);
+                mp.start();
             }
         });
 
-        //starts playing the video
-        btnonce.callOnClick();
+
+        /** Gestures */
+        GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
+        /** hides the gesture drawn line */
+        gestureOverlayView.setGestureColor(Color.YELLOW);
+        gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
+
+        gestureOverlayView.addOnGesturePerformedListener(this);
+        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gestureplayer);
+        if (!gestureLib.load()) {
+            finish();
+        }
     }
 
-    /**Get file for the movie*/
+    /** onGesturePerformed event */
+    @Override
+    public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+        ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
+        for (Prediction prediction : predictions) {
+            if (prediction.score > 1.0) {
+                if (prediction.name.equals("play")) {
+                    vv.start();
+                    break;
+                } else if (prediction.name.equals("pause")) {
+                    Toast toast=Toast.makeText(getApplicationContext(),"pause",Toast.LENGTH_SHORT);
+                    toast.show();
+                    //vv.pause();
+                    break;
+                } else if (prediction.name.equals("stop")) {
+                    Toast toast=Toast.makeText(getApplicationContext(),"stop",Toast.LENGTH_SHORT);
+                    toast.show();
+                    //vv.stopPlayback();
+                    break;
+                } else if (prediction.name.equals("step_forward")) {
+                    vv.seekTo(vv.getCurrentPosition() + 10000);
+                    break;
+                } else if (prediction.name.equals("step_back")) {
+                    vv.seekTo(vv.getCurrentPosition() - 10000);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void pauseMovie(View view){
+        vv.pause();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (vv != null ) {
+            resumedActivity = true;
+            pausedMilliSec = vv.getCurrentPosition();
+        }
+    }
+
+//    @Override
+//    public void onConfigurationChanged(Configuration newConfig) {
+//        super.onConfigurationChanged(newConfig);
+//
+//        final View overlay = findViewById(R.id.playerLayout);
+//        changeVideoSize(overlay);
+//    }
+
+    /**Get file id for the movie*/
     public int getMovieFile(String movieName){
-        int file_id = getResources().getIdentifier(movieName , "raw", getPackageName());
+        int file_id;
+        file_id = getResources().getIdentifier("" + movieName.toLowerCase() + ".mp4" , "raw", getApplicationContext().getPackageName());
+        Log.d("FILE_ID", Integer.toString(file_id));
         return file_id;
     }
+
+//    public void changeVideoSize(View overlay){
+//        float scaleX, scaleY;
+//        int pivotPointX, pivotPointY;
+//
+//        DisplayMetrics displayMetrics = new DisplayMetrics();
+//        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+//        int screenWidth = displayMetrics.widthPixels;
+//        int screenHeight = displayMetrics.heightPixels;
+//
+//        //dont stretch video if its in portrait mode
+//        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+//            //scaleY = 0.5f;
+//
+//            scaleY = (float)videoHeight / screenHeight;
+//            scaleX = (float)screenWidth  / screenWidth;
+//
+//            Log.d("VIDEO_TESTE", videoHeight + " / " + screenHeight + " = " + scaleY);
+//
+//            pivotPointX = (int) (screenWidth / 2);
+//            pivotPointY = (int) (screenHeight / 2);
+//        }else{
+//            scaleY = 1.0f;
+//            scaleX = (videoWidth * screenHeight / videoHeight) / screenWidth;
+//
+//            pivotPointX = (int) (screenWidth / 2);
+//            pivotPointY = (int) (screenHeight / 2);
+//        }
+//        overlay.setScaleX(scaleX);
+//        overlay.setScaleY(scaleY);
+//        overlay.setPivotX(pivotPointX);
+//        overlay.setPivotY(pivotPointY);
+//    }
 
 }
