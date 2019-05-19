@@ -307,7 +307,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
      * For the gestures
      */
     @Override
-    public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
+    public void onGesturePerformed(GestureOverlayView erlay, Gesture gesture) {
         ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
         for (Prediction prediction : predictions) {
             if (prediction.score > 1.0) {

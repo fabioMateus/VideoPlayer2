@@ -13,13 +13,18 @@ import android.os.Bundle;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
+
+
 import java.util.ArrayList;
+
 
 public class PlayerActivity extends AppCompatActivity implements GestureOverlayView.OnGesturePerformedListener {
     String movie_file_name;     // saves the movie file name that was received by the previous activity
@@ -167,28 +172,24 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         for (Prediction prediction : predictions) {
             if (prediction.score > 1.0) {
                 if (prediction.name.equals("play")) {
-                    Toast toast=Toast.makeText(getApplicationContext(),"Play",Toast.LENGTH_SHORT);
-                    toast.show();
+                    showImageToast("play");
                     vv.start();
                     break;
                 } else if (prediction.name.equals("pause")) {
-                    Toast toast=Toast.makeText(getApplicationContext(),"Pause",Toast.LENGTH_SHORT);
-                    toast.show();
+                    showImageToast("pause");
                     vv.pause();
                     break;
                 } else if (prediction.name.equals("stop")) {
-                    Toast toast=Toast.makeText(getApplicationContext(),"Stop",Toast.LENGTH_SHORT);
-                    toast.show();
-                    vv.stopPlayback();
+                    showImageToast("stop");
+                    vv.seekTo(0);
+                    vv.pause();
                     break;
                 } else if (prediction.name.equals("step_forward")) {
-                    Toast toast=Toast.makeText(getApplicationContext(),"+10s",Toast.LENGTH_SHORT);
-                    toast.show();
+                    showImageToast("fastforward");
                     vv.seekTo(vv.getCurrentPosition() + 10000);
                     break;
                 } else if (prediction.name.equals("step_back")) {
-                    Toast toast=Toast.makeText(getApplicationContext(),"-10s",Toast.LENGTH_SHORT);
-                    toast.show();
+                    showImageToast("rewind");
                     vv.seekTo(vv.getCurrentPosition() - 10000);
                     break;
                 }
@@ -226,37 +227,25 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         return file_id;
     }
 
-//    public void changeVideoSize(View overlay){
-//        float scaleX, scaleY;
-//        int pivotPointX, pivotPointY;
-//
-//        DisplayMetrics displayMetrics = new DisplayMetrics();
-//        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-//        int screenWidth = displayMetrics.widthPixels;
-//        int screenHeight = displayMetrics.heightPixels;
-//
-//        //dont stretch video if its in portrait mode
-//        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
-//            //scaleY = 0.5f;
-//
-//            scaleY = (float)videoHeight / screenHeight;
-//            scaleX = (float)screenWidth  / screenWidth;
-//
-//            Log.d("VIDEO_TESTE", videoHeight + " / " + screenHeight + " = " + scaleY);
-//
-//            pivotPointX = (int) (screenWidth / 2);
-//            pivotPointY = (int) (screenHeight / 2);
-//        }else{
-//            scaleY = 1.0f;
-//            scaleX = (videoWidth * screenHeight / videoHeight) / screenWidth;
-//
-//            pivotPointX = (int) (screenWidth / 2);
-//            pivotPointY = (int) (screenHeight / 2);
-//        }
-//        overlay.setScaleX(scaleX);
-//        overlay.setScaleY(scaleY);
-//        overlay.setPivotX(pivotPointX);
-//        overlay.setPivotY(pivotPointY);
-//    }
+    /**Shows an image when a gesture is performed*/
+    public void showImageToast(String name){
+        int resourceId = this.getResources().getIdentifier(name, "drawable", this.getPackageName());
+
+        ImageView view = new ImageView(getApplicationContext());
+        view.setImageResource(resourceId);
+
+        final Toast toast = new Toast(getApplicationContext());
+        toast.setView(view);
+        toast.setGravity(Gravity.CENTER, 0, 0);
+        toast.show();
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                toast.cancel();
+            }
+        }, 200);
+    }
 
 }
