@@ -84,8 +84,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         Selected = getIntent().getStringExtra("Selected");
         /**Force Orientation Portrait*/
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+       setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         /**Populate data*/
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_consulta);
@@ -126,11 +125,11 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
         /**For the gestures*/
         GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
         /**hide the gesture (change if need)*/
-        gestureOverlayView.setGestureColor(Color.YELLOW);
-        gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
+        gestureOverlayView.setGestureColor(Color.TRANSPARENT);
+        gestureOverlayView.setUncertainGestureColor(Color.TRANSPARENT);
         /***/
         gestureOverlayView.addOnGesturePerformedListener(this);
-        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gesturejoao);
+        gestureLib = GestureLibraries.fromRawResource(this, R.raw.gestureconsulta);
         if (!gestureLib.load()) {
             finish();
         }
