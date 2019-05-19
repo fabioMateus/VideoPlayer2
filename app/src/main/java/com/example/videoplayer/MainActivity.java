@@ -11,6 +11,9 @@ import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
@@ -19,6 +22,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
@@ -43,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
 
     String[] MOVIESNAME;
     ArrayList<String> MOVIES = new ArrayList<String>();
+    ArrayList<String> MOVIESCOMPLETELSIT = new ArrayList<String>();
     ArrayList<String> moviesToSend;
 
     ArrayList<String> IMAGES = new ArrayList<String>();
@@ -54,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
     Boolean SORTEDBYTITLE = false;
     Boolean SORTEDBYYEAR = false;
     Boolean SORTEDBYDURATION = false;
+
+    CustomAdapter customAdapter;
 
     /**
      * To Gestures
@@ -72,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
         setContentView(R.layout.activity_main);
         ListView listView=(ListView)findViewById(R.id.moviesListView);
 
-        final CustomAdapter customAdapter = new CustomAdapter();
+        customAdapter = new CustomAdapter();
         listView.setAdapter(customAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -114,6 +121,80 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
         if (!gestureLib.load()) {
             finish();
         }
+    }
+
+    /**For search option*/
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.search_menu, menu);
+        MenuItem item= menu.findItem(R.id.search_title);
+        SearchView searchView = (SearchView)item.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                filterByTitle(newText);
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    public void filterByTitle(String filter) {
+        //Cria uma lista de jsons para depois poder filtrar pelo titulo
+        ArrayList<JSONObject> array = new ArrayList<JSONObject>();
+        for (int i = 0; i < MOVIESCOMPLETELSIT.size(); i++) {
+            try {
+                JSONObject obj = new JSONObject(MOVIESCOMPLETELSIT.get(i));
+                array.add(obj);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        //Lista de filmes filtrados
+        ArrayList<JSONObject> arrayFiltrado = new ArrayList<JSONObject>();
+
+        for (JSONObject filme:array) {
+
+            try {
+                if (filme.getString("Title").toLowerCase().contains(filter.toLowerCase())) {
+                    Log.d("sadsad", "MATCH");
+                    arrayFiltrado.add(filme);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+        //Cria uma copia dos filmes existentes
+        MOVIESCOMPLETELSIT.clear();
+        for (int i = 0; i < array.size(); i++) {
+            MOVIESCOMPLETELSIT.add(array.get(i).toString());
+            addMovieInfoToLists(array.get(i).toString());
+        }
+
+        //Limpa todas as listas para as colocar pela ordem correta
+        MOVIES.clear();
+        NAMES.clear();
+        IMAGES.clear();
+        YEARS.clear();
+        DURATIONS.clear();
+        CATEGORIES.clear();
+
+        for (int i = 0; i < arrayFiltrado.size(); i++) {
+            MOVIES.add(arrayFiltrado.get(i).toString());
+            addMovieInfoToLists(arrayFiltrado.get(i).toString());
+        }
+
+        customAdapter.notifyDataSetChanged();
     }
 
     /**
@@ -179,7 +260,8 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
                     MainActivity.this.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                           MOVIES.add(myResponse);
+                            MOVIESCOMPLETELSIT.add(myResponse);
+                            MOVIES.add(myResponse);
                            addMovieInfoToLists(myResponse);
                         }
                     });
@@ -357,6 +439,7 @@ public class MainActivity extends AppCompatActivity implements GestureOverlayVie
             TextView textViewCategorie = (TextView) convertView.findViewById(R.id.MovieCategorieTextView);
             TextView textViewDuration = (TextView) convertView.findViewById(R.id.MovieDurationTextView);
 
+            //Coloca na view os valores de cada filme
             Picasso.get().load(IMAGES.get(position)).into(imageView);
             textViewName.setText(NAMES.get(position));
             textViewYear.setText(YEARS.get(position));
