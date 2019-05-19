@@ -174,12 +174,12 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                 } else if (prediction.name.equals("pause")) {
                     Toast toast=Toast.makeText(getApplicationContext(),"Pause",Toast.LENGTH_SHORT);
                     toast.show();
-                    //vv.pause();
+                    vv.pause();
                     break;
                 } else if (prediction.name.equals("stop")) {
                     Toast toast=Toast.makeText(getApplicationContext(),"Stop",Toast.LENGTH_SHORT);
                     toast.show();
-                    //vv.stopPlayback();
+                    vv.stopPlayback();
                     break;
                 } else if (prediction.name.equals("step_forward")) {
                     Toast toast=Toast.makeText(getApplicationContext(),"+10s",Toast.LENGTH_SHORT);
