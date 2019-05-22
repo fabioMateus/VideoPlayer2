@@ -19,6 +19,7 @@
                   android:exported="true"
                   android:configChanges="orientation|screenSize">
         </activity>
+        <activity android:name=".FullScreenImage" />
         <activity android:name=".ConsultaActivity" />
         <activity android:name=".Popup" />
         <activity android:name=".MainActivity">

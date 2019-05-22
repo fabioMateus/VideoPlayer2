@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.gesture.Gesture;
 import android.gesture.GestureLibraries;
@@ -123,6 +124,10 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         // vv.setMediaController(mediacontroller);
         vv.setVideoURI(uri);
         vv.requestFocus();
+
+        //if is the first time playing a video shows the possible gestures
+        checkFirstRun();
+
         vv.start();
 
         vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -246,6 +251,20 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                 toast.cancel();
             }
         }, 200);
+    }
+
+    public void checkFirstRun() {
+        boolean isFirstRun = getSharedPreferences("PREFERENCE", MODE_PRIVATE).getBoolean("isFirstRun", true);
+
+        if (isFirstRun){
+            Intent intent = new Intent(this, FullScreenImage.class);
+            startActivity(intent);
+
+            getSharedPreferences("PREFERENCE", MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("isFirstRun", false)
+                    .apply();
+        }
     }
 
 }
