@@ -13,8 +13,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
@@ -31,11 +33,10 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
     String movie_file_name;     // saves the movie file name that was received by the previous activity
     int pausedMilliSec;         // saves the movie current time when leaving the activity
     boolean resumedActivity;    // indicates if the activity was paused
-    //int videoWidth;
-    //int videoHeight;
+    boolean canShowController = false;
 
+    MediaController hiddenmediacontroller;
     private VideoView vv;
-    private MediaController mediacontroller;
     private Uri uri;
     private boolean isContinuously = false;
     private ProgressBar progressBar;
@@ -108,11 +109,18 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                      }
                  });
 
+
         progressBar = new ProgressBar(this);
         vv = (VideoView) findViewById(R.id.vv);
 
-        mediacontroller = new MediaController(this);
-        mediacontroller.setAnchorView(vv);
+        hiddenmediacontroller = new MediaController(this) {
+            @Override
+            public void show()
+            {
+                hiddenmediacontroller.hide();
+            }
+        };
+        hiddenmediacontroller.setAnchorView(vv);
 
         uri = Uri.parse("android.resource://"+getPackageName()+"/raw/" + movie_file_name.toLowerCase());
         Log.d("MOVIE_PATH", uri.toString());
@@ -120,15 +128,41 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         //starts playing the video
         isContinuously = true;
         progressBar.setVisibility(View.VISIBLE);
-        // media controller shoes video controls on click but interrupts immersive mode
-        // vv.setMediaController(mediacontroller);
         vv.setVideoURI(uri);
         vv.requestFocus();
+
+        vv.setMediaController(hiddenmediacontroller);
 
         //if is the first time playing a video shows the possible gestures
         checkFirstRun();
 
         vv.start();
+
+        //Listens for clicks on the screen and fastforwards if they hold the right side and rewind for the left
+        vv.setOnTouchListener(new View.OnTouchListener()
+        {
+            @Override
+            public boolean onTouch(View v, MotionEvent motionEvent)
+            {
+                int x = (int)motionEvent.getX();
+                int y = (int)motionEvent.getY();
+
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                int height = displayMetrics.heightPixels;
+                int width = displayMetrics.widthPixels;
+
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        if (y > height - 75) { //shows media controller if the user clicks the bottom of screen
+                            showMediaController();
+                        }
+                    case MotionEvent.ACTION_MOVE:
+                    case MotionEvent.ACTION_UP:
+                }
+                return false;
+            }
+        });
 
         vv.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -267,4 +301,19 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         }
     }
 
+    public void showMediaController(){
+        canShowController = true;
+//        Toast.makeText(v.getContext(),"Show", Toast.LENGTH_SHORT).show();
+        MediaController newmediacontroller = new MediaController(this);
+        newmediacontroller.setAnchorView(vv);
+        vv.setMediaController(newmediacontroller);
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                vv.setMediaController(hiddenmediacontroller);
+            }
+        }, 3000);
+    }
 }
