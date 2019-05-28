@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 
 public class PlayerActivity extends AppCompatActivity implements GestureOverlayView.OnGesturePerformedListener {
-    String movie_file_name;     // saves the movie file name that was received by the previous activity
+    String movie_name;     // saves the movie file name that was received by the previous activity
     int pausedMilliSec;         // saves the movie current time when leaving the activity
     boolean resumedActivity;    // indicates if the activity was paused
     boolean canShowController = false;
@@ -48,9 +48,9 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
         //TODO: change movie_file_name before push
-        //movie_file_name= getIntent().getStringExtra("movie");
-        movie_file_name= "Aquaman2018";
-        Log.d("FILE_NAME_RECIEVED", movie_file_name);
+        movie_name = getIntent().getStringExtra("movie");
+        //movie_name= "Aquaman2018";
+        Log.d("MOVIE_NAME_RECIEVED", movie_name);
 
         /**Force landscape orientation*/
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -122,7 +122,7 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         };
         hiddenmediacontroller.setAnchorView(vv);
 
-        uri = Uri.parse("android.resource://"+getPackageName()+"/raw/" + movie_file_name.toLowerCase());
+        uri = Uri.parse("android.resource://"+getPackageName()+"/raw/" + getFileName(movie_name));
         Log.d("MOVIE_PATH", uri.toString());
 
         //starts playing the video
@@ -258,12 +258,11 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 //        changeVideoSize(overlay);
 //    }
 
-    /**Get file id for the movie*/
-    public int getMovieFile(String movieName){
-        int file_id;
-        file_id = getResources().getIdentifier("" + movieName.toLowerCase() + ".mp4" , "raw", getApplicationContext().getPackageName());
-        Log.d("FILE_ID", Integer.toString(file_id));
-        return file_id;
+    /**Get file name for the movie*/
+    public String getFileName(String movieName){
+        String file_name = movieName.toLowerCase().replace(" ", "");
+        Log.d("FILE_NAME_RECIEVED", file_name);
+        return file_name;
     }
 
     /**Shows an image when a gesture is performed*/
@@ -301,7 +300,7 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         }
     }
 
-    public void showMediaController(){
+    public void showMediaController() {
         canShowController = true;
 //        Toast.makeText(v.getContext(),"Show", Toast.LENGTH_SHORT).show();
         MediaController newmediacontroller = new MediaController(this);
