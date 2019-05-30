@@ -194,10 +194,7 @@ public class ConsultaActivity extends AppCompatActivity implements OnGesturePerf
      */
     public static void watchYoutubeVideo(Context context, String id) {
         Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + id));
-        Intent webIntent = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("http://www.youtube.com/watch?v=" + id));
         appIntent.putExtra("force_fullscreen", true);
-
         context.startActivity(appIntent);
     }
 
