@@ -1,5 +1,6 @@
 package com.example.videoplayer;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.gesture.Gesture;
@@ -8,6 +9,10 @@ import android.gesture.GestureLibrary;
 import android.gesture.GestureOverlayView;
 import android.gesture.Prediction;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -44,13 +49,36 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
     /** Gestures  */
     private GestureLibrary gestureLib;
 
+    /** Shake detection */
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         /**Get the data from  MainActivity*/
         //TODO: change movie_file_name before push
-        movie_name = getIntent().getStringExtra("movie");
-        //movie_name= "Aquaman2018";
+        //movie_name = getIntent().getStringExtra("movie");
+        movie_name= "Moana 2016";
         Log.d("MOVIE_NAME_RECIEVED", movie_name);
+
+        // ShakeDetector initialization
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
+
+            @Override
+            public void onShake(int count) {
+                /*
+                 * The following method, "handleShakeEvent(count):" is a stub //
+                 * method you would use to setup whatever you want done once the
+                 * device has been shook.
+                 */
+                handleShakeEvent(count);
+            }
+        });
 
         /**Force landscape orientation*/
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -58,7 +86,6 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
-        getSupportActionBar().hide(); // hide the title bar
 
         setContentView(R.layout.activity_player);
 
@@ -101,17 +128,13 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                              }, 3000);
 
 
-                         } else {
-                             // The system bars are NOT visible. Make any desired
-                             // adjustments to your UI, such as hiding the action bar or
-                             // other navigational controls.
                          }
                      }
                  });
 
 
         progressBar = new ProgressBar(this);
-        vv = (VideoView) findViewById(R.id.vv);
+        vv = findViewById(R.id.vv);
 
         hiddenmediacontroller = new MediaController(this) {
             @Override
@@ -191,9 +214,9 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         });
 
 
-        /** Gestures */
+        /* Gestures */
         GestureOverlayView gestureOverlayView = findViewById(R.id.gestures);
-        /** hides the gesture drawn line */
+        /* hides the gesture drawn line */
         gestureOverlayView.setGestureColor(Color.YELLOW);
         gestureOverlayView.setUncertainGestureColor(Color.YELLOW);
 
@@ -210,28 +233,32 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         ArrayList<Prediction> predictions = gestureLib.recognize(gesture);
         for (Prediction prediction : predictions) {
             if (prediction.score > 1.0) {
-                if (prediction.name.equals("play")) {
-                    showImageToast("play");
-                    vv.start();
-                    break;
-                } else if (prediction.name.equals("pause")) {
-                    showImageToast("pause");
-                    vv.pause();
-                    break;
-                } else if (prediction.name.equals("stop")) {
-                    showImageToast("stop");
-                    vv.seekTo(0);
-                    vv.pause();
-                    break;
-                } else if (prediction.name.equals("step_forward")) {
-                    showImageToast("fastforward");
-                    vv.seekTo(vv.getCurrentPosition() + 10000);
-                    break;
-                } else if (prediction.name.equals("step_back")) {
-                    showImageToast("rewind");
-                    vv.seekTo(vv.getCurrentPosition() - 10000);
-                    break;
+                switch(prediction.name){
+                    case "play":
+                        showImageToast("play");
+                        vv.start();
+                        break;
+                    case "pause":
+                        showImageToast("pause");
+                        vv.pause();
+                        break;
+                    case "stop":
+                        showImageToast("stop");
+                        vv.seekTo(0);
+                        vv.pause();
+                        break;
+                    case "step_forward":
+                        showImageToast("fastforward");
+                        vv.seekTo(vv.getCurrentPosition() + 10000);
+                        break;
+                    case "step_back":
+                        showImageToast("rewind");
+                        vv.seekTo(vv.getCurrentPosition() - 10000);
+                        break;
+                    default:
+                        Log.e("GESTURE_PERFORMED", "Gesture unknown");
                 }
+                break;
             }
         }
     }
@@ -248,6 +275,17 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
             resumedActivity = true;
             pausedMilliSec = vv.getCurrentPosition();
         }
+
+        // Add the following line to unregister the Sensor Manager onPause
+        mSensorManager.unregisterListener(mShakeDetector);
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        // Add the following line to register the Session Manager Listener onResume
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
     }
 
 //    @Override
@@ -302,7 +340,6 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 
     public void showMediaController() {
         canShowController = true;
-//        Toast.makeText(v.getContext(),"Show", Toast.LENGTH_SHORT).show();
         MediaController newmediacontroller = new MediaController(this);
         newmediacontroller.setAnchorView(vv);
         vv.setMediaController(newmediacontroller);
@@ -314,5 +351,19 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                 vv.setMediaController(hiddenmediacontroller);
             }
         }, 3000);
+    }
+
+    public void handleShakeEvent(int count){
+        if (count > 1){
+            if (vv.isPlaying()){
+                vv.pause();
+                resumedActivity = true;
+                pausedMilliSec = vv.getCurrentPosition();
+                showImageToast("pause");
+            }else{
+                vv.resume();
+                showImageToast("play");
+            }
+        }
     }
 }
