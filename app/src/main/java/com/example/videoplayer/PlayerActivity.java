@@ -10,8 +10,6 @@ import android.gesture.GestureOverlayView;
 import android.gesture.Prediction;
 import android.graphics.Color;
 import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -56,10 +54,8 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        /**Get the data from  MainActivity*/
-        //TODO: change movie_file_name before push
-        //movie_name = getIntent().getStringExtra("movie");
-        movie_name= "Moana 2016";
+        //Get the data from  MainActivity
+        movie_name = getIntent().getStringExtra("movie");
         Log.d("MOVIE_NAME_RECIEVED", movie_name);
 
         // ShakeDetector initialization
@@ -71,57 +67,43 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 
             @Override
             public void onShake(int count) {
-                /*
-                 * The following method, "handleShakeEvent(count):" is a stub //
-                 * method you would use to setup whatever you want done once the
-                 * device has been shook.
-                 */
                 handleShakeEvent(count);
             }
         });
 
-        /**Force landscape orientation*/
+        //Force landscape orientation
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE); //will hide the title
+        getSupportActionBar().hide(); // hide the title bar
 
         setContentView(R.layout.activity_player);
 
         final View overlay = findViewById(R.id.playerLayout);
 
+        //enable android immersive mode
         overlay.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE
-                // Set the content to appear under the system bars so that the
-                // content doesn't resize when the system bars hide and show.
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
 
-        //listen for changes in the UI and hides it after a few seconds (status and navigation bar)
+        //listen for changes in the UI and hides it after a 3 seconds (status and navigation bar)
         overlay.setOnSystemUiVisibilityChangeListener (new View.OnSystemUiVisibilityChangeListener() {
                      @Override
                      public void onSystemUiVisibilityChange(int visibility) {
-                         // Note that system bars will only be "visible" if none of the
-                         // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
                          if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                             // The system bars are visible. Make any desired
-                             // adjustments to your UI, such as showing the action bar or
-                             // other navigational controls.
                              Handler handler = new Handler();
                              handler.postDelayed(new Runnable() {
                                  @Override
                                  public void run() {
                                      overlay.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE
-                                             // Set the content to appear under the system bars so that the
-                                             // content doesn't resize when the system bars hide and show.
                                              | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                                              | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                                              | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                             // Hide the nav bar and status bar
                                              | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                              | View.SYSTEM_UI_FLAG_FULLSCREEN);
                                  }
@@ -161,7 +143,7 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
 
         vv.start();
 
-        //Listens for clicks on the screen and fastforwards if they hold the right side and rewind for the left
+        //Listens for clicks on the screen
         vv.setOnTouchListener(new View.OnTouchListener()
         {
             @Override
@@ -180,8 +162,11 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                         if (y > height - 75) { //shows media controller if the user clicks the bottom of screen
                             showMediaController();
                         }
+                        break;
                     case MotionEvent.ACTION_MOVE:
+                        break;
                     case MotionEvent.ACTION_UP:
+                        break;
                 }
                 return false;
             }
@@ -203,10 +188,6 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
                 if (resumedActivity) {
                     mp.seekTo(pausedMilliSec);
                 }
-
-//                videoWidth = mp.getVideoWidth();
-//                videoHeight = mp.getVideoHeight();
-//                changeVideoSize(overlay);
 
                 progressBar.setVisibility(View.GONE);
                 mp.start();
@@ -263,40 +244,24 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         }
     }
 
-    public void pauseMovie(View view){
-        vv.pause();
-    }
-
     @Override
     protected void onPause() {
         super.onPause();
+        mSensorManager.unregisterListener(mShakeDetector);
 
         if (vv != null ) {
             resumedActivity = true;
             pausedMilliSec = vv.getCurrentPosition();
         }
-
-        // Add the following line to unregister the Sensor Manager onPause
-        mSensorManager.unregisterListener(mShakeDetector);
-        super.onPause();
     }
 
     @Override
     protected void onResume(){
         super.onResume();
-        // Add the following line to register the Session Manager Listener onResume
         mSensorManager.registerListener(mShakeDetector, mAccelerometer,	SensorManager.SENSOR_DELAY_UI);
     }
 
-//    @Override
-//    public void onConfigurationChanged(Configuration newConfig) {
-//        super.onConfigurationChanged(newConfig);
-//
-//        final View overlay = findViewById(R.id.playerLayout);
-//        changeVideoSize(overlay);
-//    }
-
-    /**Get file name for the movie*/
+    /**Get file name for the movie, removes spaces and applies lowercase to all letters*/
     public String getFileName(String movieName){
         String file_name = movieName.toLowerCase().replace(" ", "");
         Log.d("FILE_NAME_RECIEVED", file_name);
@@ -353,6 +318,7 @@ public class PlayerActivity extends AppCompatActivity implements GestureOverlayV
         }, 3000);
     }
 
+    /** Pauses/resumes the video if the phone was shaken */
     public void handleShakeEvent(int count){
         if (count > 1){
             if (vv.isPlaying()){
